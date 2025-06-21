@@ -2,7 +2,13 @@ const nodemailer = require('nodemailer');
 
 // Create transporter
 const createTransporter = () => {
-  return nodemailer.createTransporter({
+  // Check if email credentials are configured
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+    console.log('Email credentials not configured. Email functionality will be disabled.');
+    return null;
+  }
+
+  return nodemailer.createTransport({
     service: 'gmail',
     auth: {
       user: process.env.EMAIL_USER,
@@ -15,6 +21,12 @@ const createTransporter = () => {
 const sendEmail = async ({ to, subject, html, text }) => {
   try {
     const transporter = createTransporter();
+    
+    // If no transporter (credentials not configured), log and return
+    if (!transporter) {
+      console.log(`Email would be sent to ${to}: ${subject}`);
+      return { messageId: 'mock-message-id' };
+    }
     
     const mailOptions = {
       from: process.env.EMAIL_USER,
@@ -29,7 +41,8 @@ const sendEmail = async ({ to, subject, html, text }) => {
     return info;
   } catch (error) {
     console.error('Email sending failed:', error);
-    throw error;
+    // Don't throw error to prevent application crash
+    return { error: error.message };
   }
 };
 

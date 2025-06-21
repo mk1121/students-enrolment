@@ -100,6 +100,50 @@ router.get('/', [
   }
 });
 
+// @route   GET /api/courses/featured
+// @desc    Get featured courses
+// @access  Public
+router.get('/featured', async (req, res) => {
+  try {
+    const featuredCourses = await Course.find({
+      isFeatured: true,
+      status: 'published',
+      isActive: true
+    })
+    .populate('instructor', 'firstName lastName')
+    .limit(6)
+    .select('-syllabus -reviews -materials');
+
+    res.json({ courses: featuredCourses });
+
+  } catch (error) {
+    console.error('Get featured courses error:', error);
+    res.status(500).json({ 
+      message: 'Server error while fetching featured courses' 
+    });
+  }
+});
+
+// @route   GET /api/courses/categories
+// @desc    Get all course categories
+// @access  Public
+router.get('/categories', async (req, res) => {
+  try {
+    const categories = await Course.distinct('category', {
+      status: 'published',
+      isActive: true
+    });
+
+    res.json({ categories });
+
+  } catch (error) {
+    console.error('Get categories error:', error);
+    res.status(500).json({ 
+      message: 'Server error while fetching categories' 
+    });
+  }
+});
+
 // @route   GET /api/courses/:id
 // @desc    Get course by ID
 // @access  Public
@@ -377,50 +421,6 @@ router.post('/:id/reviews', [
     console.error('Add review error:', error);
     res.status(500).json({ 
       message: 'Server error while adding review' 
-    });
-  }
-});
-
-// @route   GET /api/courses/featured
-// @desc    Get featured courses
-// @access  Public
-router.get('/featured/featured', async (req, res) => {
-  try {
-    const featuredCourses = await Course.find({
-      isFeatured: true,
-      status: 'published',
-      isActive: true
-    })
-    .populate('instructor', 'firstName lastName')
-    .limit(6)
-    .select('-syllabus -reviews -materials');
-
-    res.json({ courses: featuredCourses });
-
-  } catch (error) {
-    console.error('Get featured courses error:', error);
-    res.status(500).json({ 
-      message: 'Server error while fetching featured courses' 
-    });
-  }
-});
-
-// @route   GET /api/courses/categories
-// @desc    Get all course categories
-// @access  Public
-router.get('/categories/categories', async (req, res) => {
-  try {
-    const categories = await Course.distinct('category', {
-      status: 'published',
-      isActive: true
-    });
-
-    res.json({ categories });
-
-  } catch (error) {
-    console.error('Get categories error:', error);
-    res.status(500).json({ 
-      message: 'Server error while fetching categories' 
     });
   }
 });

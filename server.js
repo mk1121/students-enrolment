@@ -8,6 +8,9 @@ require('dotenv').config();
 
 const app = express();
 
+// Trust proxy for rate limiting
+app.set('trust proxy', 1);
+
 // Import routes
 const authRoutes = require('./server/routes/auth');
 const courseRoutes = require('./server/routes/courses');
@@ -22,7 +25,11 @@ app.use(compression());
 // Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100 // limit each IP to 100 requests per windowMs
+  max: 100, // limit each IP to 100 requests per windowMs
+  standardHeaders: true,
+  legacyHeaders: false,
+  skipSuccessfulRequests: false,
+  skipFailedRequests: false
 });
 app.use('/api/', limiter);
 
