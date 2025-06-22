@@ -1,5 +1,5 @@
 const express = require('express');
-const { body, validationResult, query } = require('express-validator');
+const { body, validationResult, query, param } = require('express-validator');
 const Course = require('../models/Course');
 const { authenticateToken, requireAdmin, requireInstructor, optionalAuth } = require('../middleware/auth');
 
@@ -149,7 +149,7 @@ router.get('/categories', async (req, res) => {
 // @access  Public
 router.get('/:id', [
   optionalAuth,
-  query('id').isMongoId().withMessage('Invalid course ID')
+  param('id').isMongoId().withMessage('Invalid course ID')
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -251,6 +251,7 @@ router.post('/', [
 // @access  Private (Admin/Instructor)
 router.put('/:id', [
   authenticateToken,
+  param('id').isMongoId().withMessage('Invalid course ID'),
   requireInstructor,
   body('title')
     .optional()
@@ -327,9 +328,18 @@ router.put('/:id', [
 // @access  Private (Admin/Instructor)
 router.delete('/:id', [
   authenticateToken,
+  param('id').isMongoId().withMessage('Invalid course ID'),
   requireInstructor
 ], async (req, res) => {
   try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ 
+        message: 'Validation failed',
+        errors: errors.array() 
+      });
+    }
+
     const course = await Course.findById(req.params.id);
     
     if (!course) {
@@ -366,6 +376,7 @@ router.delete('/:id', [
 // @access  Private (Students only)
 router.post('/:id/reviews', [
   authenticateToken,
+  param('id').isMongoId().withMessage('Invalid course ID'),
   body('rating')
     .isInt({ min: 1, max: 5 })
     .withMessage('Rating must be between 1 and 5'),

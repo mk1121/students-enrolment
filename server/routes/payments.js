@@ -1,6 +1,5 @@
 const express = require('express');
 const { body, validationResult } = require('express-validator');
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const Payment = require('../models/Payment');
 const Enrollment = require('../models/Enrollment');
 const Course = require('../models/Course');
@@ -8,6 +7,26 @@ const { authenticateToken, requireAdmin } = require('../middleware/auth');
 const { sendEmail, emailTemplates } = require('../utils/email');
 
 const router = express.Router();
+
+// Factory function for Stripe - allows for better testing
+let testStripeInstance = null;
+
+const getStripe = () => {
+  if (process.env.NODE_ENV === 'test' && testStripeInstance) {
+    return testStripeInstance;
+  }
+  if (process.env.NODE_ENV === 'test') {
+    // Return the mocked stripe function
+    const stripeMock = require('stripe');
+    return stripeMock();
+  }
+  return require('stripe')(process.env.STRIPE_SECRET_KEY);
+};
+
+// Function to set test instance
+const setTestStripeInstance = (instance) => {
+  testStripeInstance = instance;
+};
 
 // @route   POST /api/payments/create-payment-intent
 // @desc    Create Stripe payment intent
@@ -60,6 +79,7 @@ router.post('/create-payment-intent', [
     const amountInCents = Math.round(enrollment.payment.amount * 100);
 
     // Create payment intent
+    const stripe = getStripe();
     const paymentIntent = await stripe.paymentIntents.create({
       amount: amountInCents,
       currency: enrollment.payment.currency.toLowerCase(),
@@ -84,6 +104,7 @@ router.post('/create-payment-intent', [
       status: 'pending',
       stripePaymentIntentId: paymentIntent.id,
       description: `Payment for ${enrollment.course.title} course`,
+      netAmount: enrollment.payment.amount,
       metadata: {
         customerEmail: enrollment.student.email,
         customerName: `${enrollment.student.firstName} ${enrollment.student.lastName}`,
@@ -148,6 +169,7 @@ router.post('/confirm', [
     }
 
     // Verify payment intent with Stripe
+    const stripe = getStripe();
     const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
     
     if (paymentIntent.status === 'succeeded') {
@@ -223,6 +245,7 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
   let event;
 
   try {
+    const stripe = getStripe();
     event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
   } catch (err) {
     console.error('Webhook signature verification failed:', err.message);
@@ -409,6 +432,7 @@ router.post('/:id/refund', [
     }
 
     // Process refund through Stripe
+    const stripe = getStripe();
     const refund = await stripe.refunds.create({
       charge: payment.stripeChargeId,
       amount: Math.round(amount * 100), // Convert to cents

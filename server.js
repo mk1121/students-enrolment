@@ -16,6 +16,7 @@ const authRoutes = require('./server/routes/auth');
 const courseRoutes = require('./server/routes/courses');
 const enrollmentRoutes = require('./server/routes/enrollments');
 const paymentRoutes = require('./server/routes/payments');
+const sslcommerzRoutes = require('./server/routes/sslcommerz');
 const userRoutes = require('./server/routes/users');
 
 // Security middleware
@@ -58,11 +59,42 @@ app.use('/api/auth', authRoutes);
 app.use('/api/courses', courseRoutes);
 app.use('/api/enrollments', enrollmentRoutes);
 app.use('/api/payments', paymentRoutes);
+app.use('/api/payments/sslcommerz', sslcommerzRoutes);
 app.use('/api/users', userRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'OK', message: 'Server is running' });
+  const healthCheck = {
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    environment: process.env.NODE_ENV || 'development',
+    version: process.env.npm_package_version || '1.0.0',
+    database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
+    memory: process.memoryUsage(),
+  };
+  
+  res.status(200).json(healthCheck);
+});
+
+// Basic metrics endpoint (for monitoring)
+app.get('/api/metrics', (req, res) => {
+  const metrics = {
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    memory: process.memoryUsage(),
+    cpu: process.cpuUsage(),
+    nodeVersion: process.version,
+    platform: process.platform,
+    database: {
+      state: mongoose.connection.readyState,
+      host: mongoose.connection.host,
+      name: mongoose.connection.name,
+    },
+    environment: process.env.NODE_ENV || 'development',
+  };
+  
+  res.status(200).json(metrics);
 });
 
 // Error handling middleware

@@ -77,7 +77,7 @@ const requireInstructor = async (req, res, next) => {
       return next();
     }
 
-    const courseId = req.params.courseId || req.body.courseId;
+    const courseId = req.params.id || req.params.courseId || req.body.courseId;
     if (!courseId) {
       return res.status(400).json({ 
         message: 'Course ID is required.' 
