@@ -39,7 +39,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // CORS middleware
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
+  origin: process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'staging'
     ? process.env.CLIENT_URL 
     : 'http://localhost:3000',
   credentials: true
