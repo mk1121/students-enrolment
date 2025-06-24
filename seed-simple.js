@@ -17,7 +17,7 @@ const sampleUsers = [
     role: 'admin',
     phone: '+1234567890',
     isEmailVerified: true,
-    isActive: true
+    isActive: true,
   },
   {
     firstName: 'Jane',
@@ -27,7 +27,7 @@ const sampleUsers = [
     role: 'student',
     phone: '+1234567891',
     isEmailVerified: true,
-    isActive: true
+    isActive: true,
   },
   {
     firstName: 'Mike',
@@ -37,14 +37,15 @@ const sampleUsers = [
     role: 'student',
     phone: '+1234567892',
     isEmailVerified: true,
-    isActive: true
-  }
+    isActive: true,
+  },
 ];
 
 const sampleCourses = [
   {
     title: 'Complete Web Development Bootcamp',
-    description: 'Learn web development from scratch with HTML, CSS, JavaScript, React, Node.js, and MongoDB.',
+    description:
+      'Learn web development from scratch with HTML, CSS, JavaScript, React, Node.js, and MongoDB.',
     shortDescription: 'Master web development with hands-on projects',
     category: 'Programming',
     level: 'Beginner',
@@ -53,9 +54,10 @@ const sampleCourses = [
     originalPrice: 199.99,
     discount: 50,
     currency: 'USD',
-    thumbnail: 'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=400',
+    thumbnail:
+      'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=400',
     images: [
-      'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=800'
+      'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=800',
     ],
     videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
     syllabus: [
@@ -64,23 +66,23 @@ const sampleCourses = [
         description: 'Overview of web technologies and development tools',
         duration: 60,
         videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-        materials: ['Slides', 'Code Examples']
-      }
+        materials: ['Slides', 'Code Examples'],
+      },
     ],
     requirements: [
       'Basic computer skills',
-      'No programming experience required'
+      'No programming experience required',
     ],
     learningOutcomes: [
       'Build responsive websites',
-      'Create dynamic web applications'
+      'Create dynamic web applications',
     ],
     tags: ['web development', 'javascript', 'react'],
     maxStudents: 100,
     currentStudents: 45,
     rating: {
       average: 4.8,
-      count: 127
+      count: 127,
     },
     status: 'published',
     isFeatured: true,
@@ -93,14 +95,15 @@ const sampleCourses = [
         title: 'Course Handbook',
         type: 'pdf',
         url: 'https://example.com/handbook.pdf',
-        description: 'Complete course guide and reference'
-      }
+        description: 'Complete course guide and reference',
+      },
     ],
-    isActive: true
+    isActive: true,
   },
   {
     title: 'Advanced JavaScript Masterclass',
-    description: 'Deep dive into advanced JavaScript concepts including ES6+, async programming, and design patterns.',
+    description:
+      'Deep dive into advanced JavaScript concepts including ES6+, async programming, and design patterns.',
     shortDescription: 'Master advanced JavaScript concepts and patterns',
     category: 'Programming',
     level: 'Advanced',
@@ -109,10 +112,9 @@ const sampleCourses = [
     originalPrice: 199.99,
     discount: 25,
     currency: 'USD',
-    thumbnail: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=400',
-    images: [
-      'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800'
-    ],
+    thumbnail:
+      'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=400',
+    images: ['https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800'],
     videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
     syllabus: [
       {
@@ -120,23 +122,23 @@ const sampleCourses = [
         description: 'Modern JavaScript syntax and features',
         duration: 120,
         videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-        materials: ['ES6 Cheat Sheet', 'Code Examples']
-      }
+        materials: ['ES6 Cheat Sheet', 'Code Examples'],
+      },
     ],
     requirements: [
       'Intermediate JavaScript knowledge',
-      'Understanding of basic programming concepts'
+      'Understanding of basic programming concepts',
     ],
     learningOutcomes: [
       'Master ES6+ features',
-      'Understand async programming patterns'
+      'Understand async programming patterns',
     ],
     tags: ['javascript', 'es6', 'async', 'design patterns'],
     maxStudents: 50,
     currentStudents: 28,
     rating: {
       average: 4.9,
-      count: 89
+      count: 89,
     },
     status: 'published',
     isFeatured: true,
@@ -149,14 +151,15 @@ const sampleCourses = [
         title: 'Advanced JS Reference',
         type: 'pdf',
         url: 'https://example.com/advanced-js.pdf',
-        description: 'Comprehensive JavaScript reference guide'
-      }
+        description: 'Comprehensive JavaScript reference guide',
+      },
     ],
-    isActive: true
+    isActive: true,
   },
   {
     title: 'UI/UX Design Fundamentals',
-    description: 'Learn the principles of user interface and user experience design.',
+    description:
+      'Learn the principles of user interface and user experience design.',
     shortDescription: 'Master UI/UX design principles and tools',
     category: 'Design',
     level: 'Beginner',
@@ -165,10 +168,9 @@ const sampleCourses = [
     originalPrice: 129.99,
     discount: 38,
     currency: 'USD',
-    thumbnail: 'https://images.unsplash.com/photo-1561070791-2526d30994b5?w=400',
-    images: [
-      'https://images.unsplash.com/photo-1561070791-2526d30994b5?w=800'
-    ],
+    thumbnail:
+      'https://images.unsplash.com/photo-1561070791-2526d30994b5?w=400',
+    images: ['https://images.unsplash.com/photo-1561070791-2526d30994b5?w=800'],
     videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
     syllabus: [
       {
@@ -176,23 +178,20 @@ const sampleCourses = [
         description: 'Core principles of good design',
         duration: 90,
         videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-        materials: ['Design Principles Guide', 'Examples']
-      }
+        materials: ['Design Principles Guide', 'Examples'],
+      },
     ],
-    requirements: [
-      'Creative mindset',
-      'Basic computer skills'
-    ],
+    requirements: ['Creative mindset', 'Basic computer skills'],
     learningOutcomes: [
       'Apply design principles effectively',
-      'Create wireframes and prototypes'
+      'Create wireframes and prototypes',
     ],
     tags: ['ui design', 'ux design', 'figma', 'prototyping'],
     maxStudents: 75,
     currentStudents: 32,
     rating: {
       average: 4.7,
-      count: 156
+      count: 156,
     },
     status: 'published',
     isFeatured: false,
@@ -205,20 +204,24 @@ const sampleCourses = [
         title: 'Design Toolkit',
         type: 'link',
         url: 'https://example.com/design-toolkit',
-        description: 'Collection of design resources and tools'
-      }
+        description: 'Collection of design resources and tools',
+      },
     ],
-    isActive: true
-  }
+    isActive: true,
+  },
 ];
 
 // Connect to MongoDB
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/students-enrollment', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
-.then(() => console.log('✅ Connected to MongoDB'))
-.catch(err => console.error('❌ MongoDB connection error:', err));
+mongoose
+  .connect(
+    process.env.MONGODB_URI || 'mongodb://localhost:27017/students-enrollment',
+    {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    }
+  )
+  .then(() => console.log('✅ Connected to MongoDB'))
+  .catch(err => console.error('❌ MongoDB connection error:', err));
 
 // Seed function
 async function seedDatabase() {
@@ -245,7 +248,7 @@ async function seedDatabase() {
     console.log('📚 Creating courses...');
     const coursesWithInstructor = sampleCourses.map(course => ({
       ...course,
-      instructor: adminUser._id
+      instructor: adminUser._id,
     }));
     const createdCourses = await Course.create(coursesWithInstructor);
     console.log(`✅ Created ${createdCourses.length} courses`);
@@ -258,26 +261,48 @@ async function seedDatabase() {
     for (let i = 0; i < createdCourses.length; i++) {
       const course = createdCourses[i];
       const student = students[i % students.length];
-      
+
       // Create enrollment
       const enrollment = new Enrollment({
         student: student._id,
         course: course._id,
-        status: ['active', 'completed', 'pending'][Math.floor(Math.random() * 3)],
-        enrollmentDate: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000),
+        status: ['active', 'completed', 'pending'][
+          Math.floor(Math.random() * 3)
+        ],
+        enrollmentDate: new Date(
+          Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000
+        ),
         startDate: new Date(),
         progress: Math.floor(Math.random() * 100),
-        grade: ['A+', 'A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'C-', 'D+', 'D', 'F', 'Incomplete'][Math.floor(Math.random() * 13)],
+        grade: [
+          'A+',
+          'A',
+          'A-',
+          'B+',
+          'B',
+          'B-',
+          'C+',
+          'C',
+          'C-',
+          'D+',
+          'D',
+          'F',
+          'Incomplete',
+        ][Math.floor(Math.random() * 13)],
         score: Math.floor(Math.random() * 100),
         payment: {
           amount: course.price,
           currency: course.currency,
-          paymentMethod: ['stripe', 'paypal', 'bank_transfer', 'cash'][Math.floor(Math.random() * 4)],
-          paymentStatus: ['completed', 'pending'][Math.floor(Math.random() * 2)],
+          paymentMethod: ['stripe', 'paypal', 'bank_transfer', 'cash'][
+            Math.floor(Math.random() * 4)
+          ],
+          paymentStatus: ['completed', 'pending'][
+            Math.floor(Math.random() * 2)
+          ],
           paymentDate: new Date(),
-          transactionId: `TXN-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+          transactionId: `TXN-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         },
-        isActive: true
+        isActive: true,
       });
 
       enrollments.push(enrollment);
@@ -290,7 +315,10 @@ async function seedDatabase() {
         amount: course.price,
         currency: course.currency,
         paymentMethod: enrollment.payment.paymentMethod,
-        status: enrollment.payment.paymentStatus === 'completed' ? 'completed' : 'pending',
+        status:
+          enrollment.payment.paymentStatus === 'completed'
+            ? 'completed'
+            : 'pending',
         transactionId: enrollment.payment.transactionId,
         description: `Payment for ${course.title}`,
         metadata: {
@@ -298,15 +326,15 @@ async function seedDatabase() {
           customerName: `${student.firstName} ${student.lastName}`,
           courseTitle: course.title,
           courseId: course._id.toString(),
-          enrollmentId: enrollment._id.toString()
+          enrollmentId: enrollment._id.toString(),
         },
         billingDetails: {
           name: `${student.firstName} ${student.lastName}`,
           email: student.email,
-          phone: student.phone
+          phone: student.phone,
         },
         netAmount: course.price,
-        isActive: true
+        isActive: true,
       });
 
       payments.push(payment);
@@ -331,9 +359,11 @@ async function seedDatabase() {
           comment: [
             'Great course! Very comprehensive and well-structured.',
             'Excellent content and clear explanations.',
-            'Really enjoyed this course. Highly recommended!'
+            'Really enjoyed this course. Highly recommended!',
           ][Math.floor(Math.random() * 3)],
-          createdAt: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000)
+          createdAt: new Date(
+            Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000
+          ),
         });
       }
       course.reviews = courseReviews;
@@ -350,9 +380,14 @@ async function seedDatabase() {
     // Display sample data
     console.log('\n🔍 Sample Data:');
     console.log('   Admin User:', adminUser.email);
-    console.log('   Featured Course:', createdCourses.find(c => c.isFeatured)?.title);
-    console.log('   Active Enrollments:', createdEnrollments.filter(e => e.status === 'active').length);
-
+    console.log(
+      '   Featured Course:',
+      createdCourses.find(c => c.isFeatured)?.title
+    );
+    console.log(
+      '   Active Enrollments:',
+      createdEnrollments.filter(e => e.status === 'active').length
+    );
   } catch (error) {
     console.error('❌ Error seeding database:', error);
   } finally {
@@ -362,4 +397,4 @@ async function seedDatabase() {
 }
 
 // Run the seed function
-seedDatabase(); 
+seedDatabase();

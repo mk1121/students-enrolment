@@ -1,39 +1,18 @@
 const nodemailer = require('nodemailer');
-const { google } = require('googleapis');
-
-// OAuth2 configuration
-const OAuth2 = google.auth.OAuth2;
-
-// Create OAuth2 client
-const createOAuth2Client = () => {
-  return new OAuth2(
-    process.env.GMAIL_CLIENT_ID,
-    process.env.GMAIL_CLIENT_SECRET,
-    'https://developers.google.com/oauthplayground' // Redirect URL
-  );
-};
-
-// Get OAuth2 access token
-const getAccessToken = async (oauth2Client) => {
-  try {
-    oauth2Client.setCredentials({
-      refresh_token: process.env.GMAIL_REFRESH_TOKEN
-    });
-
-    const { token } = await oauth2Client.getAccessToken();
-    return token;
-  } catch (error) {
-    console.error('Error getting OAuth2 access token:', error);
-    throw error;
-  }
-};
 
 // Create transporter with OAuth2
-const createTransporter = async () => {
+async function createTransporter() {
   try {
     // Check if OAuth2 credentials are configured
-    if (!process.env.GMAIL_CLIENT_ID || !process.env.GMAIL_CLIENT_SECRET || !process.env.GMAIL_REFRESH_TOKEN || !process.env.EMAIL_USER) {
-      console.log('Gmail OAuth2 credentials not configured. Email functionality will be disabled.');
+    if (
+      !process.env.GMAIL_CLIENT_ID ||
+      !process.env.GMAIL_CLIENT_SECRET ||
+      !process.env.GMAIL_REFRESH_TOKEN ||
+      !process.env.EMAIL_USER
+    ) {
+      console.log(
+        'Gmail OAuth2 credentials not configured. Email functionality will be disabled.'
+      );
       return null;
     }
 
@@ -44,8 +23,8 @@ const createTransporter = async () => {
         user: process.env.EMAIL_USER,
         clientId: process.env.GMAIL_CLIENT_ID,
         clientSecret: process.env.GMAIL_CLIENT_SECRET,
-        refreshToken: process.env.GMAIL_REFRESH_TOKEN
-      }
+        refreshToken: process.env.GMAIL_REFRESH_TOKEN,
+      },
     });
 
     return transporter;
@@ -53,10 +32,10 @@ const createTransporter = async () => {
     console.error('Error creating OAuth2 transporter:', error);
     return null;
   }
-};
+}
 
 // Fallback transporter for development/testing
-const createFallbackTransporter = () => {
+function createFallbackTransporter() {
   // For development/testing, use a test account or mock
   if (process.env.NODE_ENV === 'test') {
     return null; // Return null in test environment to mock emails
@@ -68,41 +47,46 @@ const createFallbackTransporter = () => {
     port: 587,
     auth: {
       user: 'ethereal.user@ethereal.email',
-      pass: 'ethereal.pass'
-    }
+      pass: 'ethereal.pass',
+    },
   });
-};
+}
 
 // Send email function
-const sendEmail = async ({ to, subject, html, text }) => {
+async function sendEmail({ to, subject, html, text }) {
   try {
     let transporter;
-    
+
     // Try to create OAuth2 transporter first
     transporter = await createTransporter();
-  
+
     // If OAuth2 fails, use fallback for development
     if (!transporter) {
       if (process.env.NODE_ENV === 'test') {
         console.log(`[TEST] Email would be sent to ${to}: ${subject}`);
         return { messageId: 'mock-message-id-oauth2' };
       }
-      
+
       console.log('OAuth2 transporter failed, using fallback for development');
-       transporter = createFallbackTransporter();
-      
+      transporter = createFallbackTransporter();
+
       if (!transporter) {
-        console.log(`Email service unavailable. Would send to ${to}: ${subject}`);
+        console.log(
+          `Email service unavailable. Would send to ${to}: ${subject}`
+        );
         return { messageId: 'mock-message-id' };
       }
     }
-    
+
     const mailOptions = {
-      from: process.env.EMAIL_FROM || process.env.EMAIL_USER || 'noreply@studentsenrollment.com',
+      from:
+        process.env.EMAIL_FROM ||
+        process.env.EMAIL_USER ||
+        'noreply@studentsenrollment.com',
       to,
       subject,
       html,
-      text: text || html.replace(/<[^>]*>/g, '') // Strip HTML if no text provided
+      text: text || html.replace(/<[^>]*>/g, ''), // Strip HTML if no text provided
     };
 
     const info = await transporter.sendMail(mailOptions);
@@ -113,36 +97,48 @@ const sendEmail = async ({ to, subject, html, text }) => {
     // Don't throw error to prevent application crash
     return { error: error.message };
   }
-};
+}
 
 // Verify transporter configuration
-const verifyEmailConfig = async () => {
+async function verifyEmailConfig() {
   try {
     const transporter = await createTransporter();
     if (!transporter) {
       return { success: false, message: 'Email transporter not configured' };
     }
     await transporter.verify();
-    return { success: true, message: 'Email configuration verified successfully' };
+    return {
+      success: true,
+      message: 'Email configuration verified successfully',
+    };
   } catch (error) {
-    if (error.message && /BadCredentials|Invalid login|Username and Password not accepted/i.test(error.message)) {
+    if (
+      error.message &&
+      /BadCredentials|Invalid login|Username and Password not accepted/i.test(
+        error.message
+      )
+    ) {
       return {
         success: false,
-        message: 'BadCredentials – your Gmail refresh token is invalid, expired, or revoked. Please generate a new one using the OAuth Playground as described in docs/GMAIL_OAUTH_SETUP.md.'
+        message:
+          'BadCredentials – your Gmail refresh token is invalid, expired, or revoked. Please generate a new one using the OAuth Playground as described in docs/GMAIL_OAUTH_SETUP.md.',
       };
     }
-    return { success: false, message: `Email configuration error: ${error.message}` };
+    return {
+      success: false,
+      message: `Email configuration error: ${error.message}`,
+    };
   }
-};
+}
 
 // Log email configuration on startup (using IIFE)
 (async () => {
-  const result = await verifyEmailConfig();
+  await verifyEmailConfig();
 })();
 
 // Email templates
 const emailTemplates = {
-  welcome: (userName) => ({
+  welcome: userName => ({
     subject: 'Welcome to Students Enrollment System',
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
@@ -166,7 +162,7 @@ const emailTemplates = {
           <p style="margin: 0; color: #6c757d;">Best regards,<br>The Students Enrollment Team</p>
         </div>
       </div>
-    `
+    `,
   }),
 
   courseEnrollment: (userName, courseTitle, coursePrice) => ({
@@ -188,7 +184,7 @@ const emailTemplates = {
           <p style="margin: 0; color: #6c757d;">Best regards,<br>The Students Enrollment Team</p>
         </div>
       </div>
-    `
+    `,
   }),
 
   paymentConfirmation: (userName, courseTitle, amount, transactionId) => ({
@@ -212,7 +208,7 @@ const emailTemplates = {
           <p style="margin: 0; color: #6c757d;">Best regards,<br>The Students Enrollment Team</p>
         </div>
       </div>
-    `
+    `,
   }),
 
   courseCompletion: (userName, courseTitle) => ({
@@ -236,7 +232,7 @@ const emailTemplates = {
           <p style="margin: 0; color: #6c757d;">Best regards,<br>The Students Enrollment Team</p>
         </div>
       </div>
-    `
+    `,
   }),
 
   passwordReset: (userName, resetUrl) => ({
@@ -262,7 +258,7 @@ const emailTemplates = {
           <p style="margin: 0; color: #6c757d;">Best regards,<br>The Students Enrollment Team</p>
         </div>
       </div>
-    `
+    `,
   }),
 
   emailVerification: (userName, verificationUrl) => ({
@@ -293,12 +289,12 @@ const emailTemplates = {
           <p style="margin: 0; color: #6c757d;">Best regards,<br>The Students Enrollment Team</p>
         </div>
       </div>
-    `
-  })
+    `,
+  }),
 };
 
 module.exports = {
   sendEmail,
   emailTemplates,
-  verifyEmailConfig
-}; 
+  verifyEmailConfig,
+};

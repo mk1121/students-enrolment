@@ -32,7 +32,9 @@ async function main() {
         await runner.runMigrations(); // Run all again
         break;
       default:
-        console.log('Usage: node migrate.js [run|rollback|status|reset] [count]');
+        console.log(
+          'Usage: node migrate.js [run|rollback|status|reset] [count]'
+        );
         console.log('');
         console.log('Commands:');
         console.log('  run      - Run pending migrations');
@@ -56,4 +58,4 @@ async function main() {
 
 if (require.main === module) {
   main();
-} 
+}

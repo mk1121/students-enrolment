@@ -8,7 +8,9 @@ module.exports = {
   },
   extends: [
     'eslint:recommended',
+    'prettier',
   ],
+  plugins: ['prettier'],
   overrides: [
     {
       env: {
@@ -19,12 +21,33 @@ module.exports = {
         sourceType: 'script',
       },
     },
+    {
+      files: ['**/sslcommerz.js'],
+      rules: {
+        camelcase: 'off',
+      },
+    },
+    {
+      files: ['**/utils/*.js', '**/email.js'],
+      rules: {
+        'no-console': 'off',
+      },
+    },
+    {
+      files: ['**/routes/*.js'],
+      rules: {
+        'no-console': ['warn', { allow: ['error', 'warn'] }],
+      },
+    },
   ],
   parserOptions: {
     ecmaVersion: 'latest',
     sourceType: 'module',
   },
   rules: {
+    // Prettier integration
+    'prettier/prettier': 'error',
+    
     // Error prevention
     'no-console': 'warn',
     'no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
@@ -41,9 +64,9 @@ module.exports = {
     'valid-typeof': 'error',
     
     // Best practices
-    'curly': 'error',
+    curly: 'error',
     'dot-notation': 'error',
-    'eqeqeq': ['error', 'always'],
+    eqeqeq: ['error', 'always'],
     'no-alert': 'error',
     'no-caller': 'error',
     'no-else-return': 'error',
@@ -68,55 +91,23 @@ module.exports = {
     'no-sequences': 'error',
     'no-throw-literal': 'error',
     'no-with': 'error',
-    'radix': 'error',
+    radix: 'error',
     'vars-on-top': 'error',
     'wrap-iife': 'error',
-    'yoda': 'error',
+    yoda: 'error',
     
-    // Stylistic issues
-    'array-bracket-spacing': ['error', 'never'],
-    'block-spacing': 'error',
-    'brace-style': ['error', '1tbs'],
-    'camelcase': 'error',
-    'comma-dangle': ['error', 'always-multiline'],
-    'comma-spacing': 'error',
-    'comma-style': 'error',
-    'computed-property-spacing': 'error',
-    'consistent-this': 'error',
-    'eol-last': 'error',
+    // Code quality and logic (non-formatting rules)
+    camelcase: 'error',
     'func-names': 'error',
     'func-style': ['error', 'declaration'],
-    'indent': ['error', 2],
-    'key-spacing': 'error',
-    'keyword-spacing': 'error',
-    'linebreak-style': ['error', 'unix'],
     'max-nested-callbacks': 'error',
     'new-cap': 'error',
-    'new-parens': 'error',
     'no-array-constructor': 'error',
     'no-lonely-if': 'error',
-    'no-mixed-spaces-and-tabs': 'error',
-    'no-multiple-empty-lines': 'error',
     'no-nested-ternary': 'error',
     'no-new-object': 'error',
-    'no-spaced-func': 'error',
-    'no-trailing-spaces': 'error',
     'no-unneeded-ternary': 'error',
-    'object-curly-spacing': ['error', 'always'],
     'one-var': ['error', 'never'],
-    'padded-blocks': ['error', 'never'],
-    'quote-props': ['error', 'as-needed'],
-    'quotes': ['error', 'single'],
-    'semi': ['error', 'always'],
-    'semi-spacing': 'error',
-    'space-after-keywords': 'off',
-    'space-before-blocks': 'error',
-    'space-before-function-paren': ['error', 'never'],
-    'space-in-parens': 'error',
-    'space-infix-ops': 'error',
-    'space-return-throw-case': 'off',
-    'space-unary-ops': 'error',
-    'spaced-comment': 'error',
   },
   ignorePatterns: [
     'node_modules/',
@@ -126,4 +117,4 @@ module.exports = {
     'dist/',
     '*.min.js',
   ],
-}; 
+};
