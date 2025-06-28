@@ -10,6 +10,7 @@ on:
 
 env:
   NODE_VERSION: '18.x'
+  BUN_VERSION: 'latest'
   BACKEND_URL: 'https://students-enrollment-develop.onrender.com'
   STRIPE_PK: 'pk_test_yourtestkeyfromstripe'
 
@@ -24,20 +25,18 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
         with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-          cache-dependency-path: client/package-lock.json
+          bun-version: ${{ env.BUN_VERSION }}
           
       - name: Install frontend dependencies
         working-directory: ./client
-        run: npm ci
+        run: bun install --frozen-lockfile
         
       - name: Build frontend for staging
         working-directory: ./client
-        run: npm run build
+        run: bun run build
         env:
           REACT_APP_API_URL: ${{ env.BACKEND_URL }}
           REACT_APP_STRIPE_PUBLISHABLE_KEY: ${{ env.STRIPE_PK }}

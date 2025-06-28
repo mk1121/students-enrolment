@@ -8,6 +8,7 @@ on:
 
 env:
   NODE_VERSION: '20.x'
+  BUN_VERSION: 'latest'
   MONGODB_VERSION: '6.0'
 
 jobs:
@@ -20,22 +21,21 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
         with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
+          bun-version: ${{ env.BUN_VERSION }}
           
       - name: Install dependencies
         run: |
-          npm ci --prefer-offline --no-audit
+          bun install --frozen-lockfile
         
       - name: Run ESLint
-        run: npm run lint
+        run: bun run lint
         continue-on-error: false
         
       - name: Check code formatting with Prettier
-        run: npm run format:check
+        run: bun run format:check
         continue-on-error: false
 
   # Job 2: Backend Testing
@@ -62,22 +62,21 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
         with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
+          bun-version: ${{ env.BUN_VERSION }}
           
       - name: Install dependencies
         run: |
-          npm ci --prefer-offline --no-audit
+          bun install --frozen-lockfile
         
       - name: Wait for MongoDB
         run: |
           timeout 30 sh -c 'until nc -z localhost 27017; do sleep 1; done'
           
       - name: Run backend tests
-        run: npm run test:backend
+        run: bun run test:backend
         env:
           NODE_ENV: test
           MONGODB_URI: mongodb://testuser:testpass@localhost:27017/test_db?authSource=admin
@@ -91,7 +90,7 @@ jobs:
           EMAIL_PASS: testpass
           
       - name: Generate test coverage
-        run: npm run test:coverage
+        run: bun run test:coverage
         
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
@@ -110,26 +109,24 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
         with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-          cache-dependency-path: client/package-lock.json
+          bun-version: ${{ env.BUN_VERSION }}
           
       - name: Install frontend dependencies
         working-directory: ./client
         run: |
-          npm ci --prefer-offline --no-audit
+          bun install --frozen-lockfile
         
       - name: Lint frontend code
         working-directory: ./client
-        run: npm run lint
+        run: bun run lint
         continue-on-error: true
         
       - name: Run frontend tests
         working-directory: ./client
-        run: npm run test:ci
+        run: bun run test:ci
         env:
           CI: true
           NODE_ENV: test
@@ -151,18 +148,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
         with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
+          bun-version: ${{ env.BUN_VERSION }}
           
       - name: Install dependencies
         run: |
-          npm ci --prefer-offline --no-audit
+          bun install --frozen-lockfile
         
-      - name: Run npm audit
-        run: npm audit --audit-level=high
+      - name: Run bun audit
+        run: bun audit
         continue-on-error: true
         
       - name: Run Snyk security scan
@@ -183,24 +179,23 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
         with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
+          bun-version: ${{ env.BUN_VERSION }}
           
       - name: Install backend dependencies
         run: |
-          npm ci --prefer-offline --no-audit
+          bun install --frozen-lockfile
         
       - name: Install frontend dependencies
         working-directory: ./client
         run: |
-          npm ci --prefer-offline --no-audit
+          bun install --frozen-lockfile
         
       - name: Build frontend
         working-directory: ./client
-        run: npm run build
+        run: bun run build
         env:
           ESLINT_NO_DEV_ERRORS: true
           TSC_COMPILE_ON_ERROR: true
@@ -293,21 +288,19 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
         with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-          cache-dependency-path: client/package-lock.json
+          bun-version: ${{ env.BUN_VERSION }}
           
       - name: Install frontend dependencies
         working-directory: ./client
         run: |
-          npm ci --prefer-offline --no-audit
+          bun install --frozen-lockfile
         
       - name: Build frontend for staging
         working-directory: ./client
-        run: npm run build
+        run: bun run build
         env:
           REACT_APP_API_URL: ${{ secrets.RENDER_STAGING_URL }}
           REACT_APP_STRIPE_PUBLISHABLE_KEY: ${{ secrets.STRIPE_PUBLISHABLE_KEY_TEST }}
@@ -360,20 +353,18 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
         with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-          cache-dependency-path: client/package-lock.json
+          bun-version: ${{ env.BUN_VERSION }}
           
       - name: Install frontend dependencies
         working-directory: ./client
-        run: npm ci
+        run: bun install --frozen-lockfile
         
       - name: Build frontend for production
         working-directory: ./client
-        run: npm run build
+        run: bun run build
         env:
           REACT_APP_API_URL: ${{ secrets.RENDER_PRODUCTION_URL }}
           REACT_APP_STRIPE_PUBLISHABLE_KEY: ${{ secrets.STRIPE_PUBLISHABLE_KEY_LIVE }}

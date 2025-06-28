@@ -13,7 +13,7 @@ The payment system supports multiple payment gateways:
 
 ### Required Dependencies
 ```bash
-npm install --save-dev stripe sslcommerz-lts
+bun install --save-dev stripe sslcommerz-lts
 ```
 
 ### Environment Variables for Testing

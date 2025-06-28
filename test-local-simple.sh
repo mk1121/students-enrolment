@@ -31,7 +31,7 @@ log_error() {
 # Function to test linting
 test_lint() {
     log_info "🔍 Testing ESLint..."
-    if npm run lint; then
+    if bun run lint; then
         log_success "ESLint passed!"
         return 0
     else
@@ -43,11 +43,11 @@ test_lint() {
 # Function to test formatting
 test_format() {
     log_info "🎨 Testing Prettier formatting..."
-    if npm run format:check; then
+    if bun run format:check; then
         log_success "Prettier formatting check passed!"
         return 0
     else
-        log_warning "Prettier formatting issues found. Run 'npm run format' to fix."
+        log_warning "Prettier formatting issues found. Run 'bun run format' to fix."
         return 1
     fi
 }
@@ -55,7 +55,7 @@ test_format() {
 # Function to test backend
 test_backend() {
     log_info "🧪 Testing Backend..."
-    if npm run test:backend; then
+    if bun run test:backend; then
         log_success "Backend tests passed!"
         return 0
     else
@@ -68,7 +68,7 @@ test_backend() {
 test_frontend() {
     log_info "⚛️ Testing Frontend..."
     cd client
-    if npm test -- --watchAll=false; then
+    if bun test -- --watchAll=false; then
         log_success "Frontend tests passed!"
         cd ..
         return 0
@@ -83,7 +83,7 @@ test_frontend() {
 test_build() {
     log_info "🏗️ Testing Build..."
     cd client
-    if npm run build; then
+    if bun run build; then
         log_success "Frontend build successful!"
         cd ..
         return 0
@@ -96,13 +96,13 @@ test_build() {
 
 # Function to run security audit
 test_security() {
-    log_info "🔒 Testing Security (npm audit)..."
+    log_info "🔒 Testing Security (bun audit)..."
     log_info "Backend security audit..."
-    npm audit || log_warning "Backend has security vulnerabilities"
+    bun audit || log_warning "Backend has security vulnerabilities"
     
     log_info "Frontend security audit..."
     cd client
-    npm audit || log_warning "Frontend has security vulnerabilities"
+    bun audit || log_warning "Frontend has security vulnerabilities"
     cd ..
     
     log_success "Security audit completed!"
@@ -148,7 +148,7 @@ show_menu() {
 # Fix formatting
 fix_formatting() {
     log_info "🎨 Fixing code formatting..."
-    npm run format
+    bun run format
     log_success "Formatting fixed!"
 }
 

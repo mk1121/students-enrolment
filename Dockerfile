@@ -1,6 +1,10 @@
 # Multi-stage build for Students Enrollment System
 FROM node:18-alpine AS base
 
+# Install Bun
+RUN curl -fsSL https://bun.sh/install | bash && \
+    mv /root/.bun/bin/bun /usr/local/bin/bun
+
 # Install system dependencies
 RUN apk add --no-cache \
     dumb-init \
@@ -11,20 +15,20 @@ RUN apk add --no-cache \
 WORKDIR /app
 
 # Copy package files
-COPY package*.json ./
+COPY package.json bun.lock ./
 
 # Frontend build stage
 FROM base AS frontend-builder
 WORKDIR /app/client
-COPY client/package*.json ./
-RUN npm ci --only=production && npm cache clean --force
+COPY client/package.json client/bun.lock ./
+RUN bun install --production --frozen-lockfile
 COPY client/ ./
-RUN npm run build
+RUN bun run build
 
 # Backend dependencies stage
 FROM base AS backend-deps
-COPY package*.json ./
-RUN npm ci --only=production && npm cache clean --force
+COPY package.json bun.lock ./
+RUN bun install --production --frozen-lockfile
 
 # Production stage
 FROM node:18-alpine AS production
@@ -45,7 +49,7 @@ COPY --from=backend-deps --chown=nodejs:nodejs /app/node_modules ./node_modules
 # Copy application code
 COPY --chown=nodejs:nodejs server/ ./server/
 COPY --chown=nodejs:nodejs migrations/ ./migrations/
-COPY --chown=nodejs:nodejs package*.json ./
+COPY --chown=nodejs:nodejs package.json bun.lock ./
 COPY --chown=nodejs:nodejs server.js ./
 
 # Copy built frontend
@@ -65,4 +69,4 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
 ENTRYPOINT ["dumb-init", "--"]
 
 # Start the application
-CMD ["node", "server.js"] 
+CMD ["bun", "run", "server.js"] 

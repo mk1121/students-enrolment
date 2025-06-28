@@ -33,11 +33,11 @@ Each migration tracks its execution state:
 
 ```bash
 # Run all pending migrations
-npm run migrate:run
+bun run migrate:run
 node migrate.js run
 
 # Check migration status first
-npm run migrate:status
+bun run migrate:status
 node migrate.js status
 ```
 
@@ -45,11 +45,11 @@ node migrate.js status
 
 ```bash
 # Rollback the last migration
-npm run migrate:rollback
+bun run migrate:rollback
 node migrate.js rollback
 
 # Rollback the last 3 migrations
-npm run migrate:rollback 3
+bun run migrate:rollback 3
 node migrate.js rollback 3
 ```
 
@@ -57,7 +57,7 @@ node migrate.js rollback 3
 
 ```bash
 # Rollback all migrations and run them again
-npm run migrate:reset
+bun run migrate:reset
 node migrate.js reset
 ```
 
@@ -65,7 +65,7 @@ node migrate.js reset
 
 ```bash
 # View current migration status
-npm run migrate:status
+bun run migrate:status
 node migrate.js status
 ```
 
@@ -441,10 +441,10 @@ MIGRATION_BATCH_SIZE=100
 mongodump --uri="$MONGODB_URI" --out backup-$(date +%Y%m%d-%H%M%S)
 
 # 2. Run migrations
-npm run migrate:run
+bun run migrate:run
 
 # 3. Verify application
-npm run health-check
+bun run health-check
 ```
 
 ## Advanced Usage

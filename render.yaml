@@ -2,10 +2,10 @@
 # This file configures deployment to Render.com
 
 # Build Command
-npm ci && npm run build
+curl -fsSL https://bun.sh/install | bash && export PATH="$HOME/.bun/bin:$PATH" && bun install --frozen-lockfile && bun run build
 
 # Start Command  
-npm start
+bun start
 
 # Environment Variables (Set these in Render Dashboard)
 # NODE_ENV=production

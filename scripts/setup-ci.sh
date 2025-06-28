@@ -108,14 +108,19 @@ install_dev_tools() {
         build-essential \
         python3-pip
     
-    # Install global npm packages
-    npm install -g \
+    # Install Bun globally if not present
+    if ! command -v bun &> /dev/null; then
+        curl -fsSL https://bun.sh/install | bash
+        export PATH="$HOME/.bun/bin:$PATH"
+    fi
+
+    # Install global packages with Bun
+    bun install -g \
         eslint \
         prettier \
         pm2 \
         nodemon \
-        jest \
-        npm-check-updates
+        jest
     
     log_success "Development tools installed successfully"
 }
@@ -129,14 +134,14 @@ setup_project_dependencies() {
     # Install backend dependencies
     if [[ -f "package.json" ]]; then
         log_info "Installing backend dependencies..."
-        npm ci
+        bun install --frozen-lockfile
     fi
     
     # Install frontend dependencies
     if [[ -f "client/package.json" ]]; then
         log_info "Installing frontend dependencies..."
         cd client
-        npm ci
+        bun install --frozen-lockfile
         cd ..
     fi
     
@@ -193,7 +198,7 @@ setup_git_hooks() {
 
 # Run linting
 echo "Running ESLint..."
-npm run lint
+bun run lint
 if [ $? -ne 0 ]; then
     echo "ESLint failed. Commit aborted."
     exit 1
@@ -201,15 +206,15 @@ fi
 
 # Run Prettier check
 echo "Running Prettier check..."
-npm run format:check
+bun run format:check
 if [ $? -ne 0 ]; then
-    echo "Code formatting check failed. Please run 'npm run format' and try again."
+    echo "Code formatting check failed. Please run 'bun run format' and try again."
     exit 1
 fi
 
 # Run tests
 echo "Running tests..."
-npm run test:quick
+bun run test:quick
 if [ $? -ne 0 ]; then
     echo "Tests failed. Commit aborted."
     exit 1
@@ -251,8 +256,8 @@ EOF
 }
 
 # Function to setup package.json scripts
-setup_npm_scripts() {
-    log_info "Setting up npm scripts..."
+setup_bun_scripts() {
+    log_info "Setting up Bun scripts..."
     
     cd "$PROJECT_ROOT"
     
@@ -265,12 +270,12 @@ setup_npm_scripts() {
     npm pkg set scripts.test:backend="jest --testPathPattern=tests/ --coverage --silent --detectOpenHandles"
     npm pkg set scripts.test:coverage="jest --coverage --silent --detectOpenHandles"
     npm pkg set scripts.test:watch="jest --watch --silent --detectOpenHandles"
-    npm pkg set scripts.build="cd client && npm run build"
-    npm pkg set scripts.dev="concurrently \"npm run dev:server\" \"npm run dev:client\""
-    npm pkg set scripts.dev:server="nodemon server.js"
-    npm pkg set scripts.dev:client="cd client && npm start"
-    npm pkg set scripts.start:staging="NODE_ENV=staging node server.js"
-    npm pkg set scripts.start:production="NODE_ENV=production node server.js"
+    npm pkg set scripts.build="cd client && bun run build"
+    npm pkg set scripts.dev="concurrently \"bun run dev:server\" \"bun run dev:client\""
+    npm pkg set scripts.dev:server="bun run --watch server.js"
+    npm pkg set scripts.dev:client="cd client && bun start"
+    npm pkg set scripts.start:staging="NODE_ENV=staging bun run server.js"
+    npm pkg set scripts.start:production="NODE_ENV=production bun run server.js"
     npm pkg set scripts.docker:build="docker build -t students-enrollment ."
     npm pkg set scripts.docker:dev="docker-compose up --build"
     npm pkg set scripts.docker:prod="docker-compose -f docker-compose.prod.yml up -d"
@@ -278,7 +283,7 @@ setup_npm_scripts() {
     npm pkg set scripts.deploy:production="./scripts/deploy.sh production"
     npm pkg set scripts.setup="./scripts/setup-ci.sh"
     
-    log_success "npm scripts setup completed"
+    log_success "Bun scripts setup completed"
 }
 
 # Function to setup development database
@@ -415,7 +420,7 @@ This project uses GitHub Actions for CI/CD with automated testing, building, and
 - Coverage reporting to Codecov
 
 ### 3. Security Scanning
-- npm audit for dependency vulnerabilities
+- bun audit for dependency vulnerabilities
 - Snyk security scanning
 
 ### 4. Building
@@ -460,7 +465,7 @@ Add these secrets to your GitHub repository:
 
 1. Clone the repository
 2. Run setup script: `./scripts/setup-ci.sh`
-3. Start development: `npm run dev`
+3. Start development: `bun run dev`
 
 ### Manual Deployment
 
@@ -538,7 +543,7 @@ verify_setup() {
     local errors=0
     
     # Check required commands
-    local commands=("node" "npm" "docker" "docker-compose" "git" "curl" "jq")
+    local commands=("node" "bun" "docker" "docker-compose" "git" "curl" "jq")
     for cmd in "${commands[@]}"; do
         if ! command_exists "$cmd"; then
             log_error "$cmd is not installed or not in PATH"
@@ -588,7 +593,7 @@ main() {
     setup_project_dependencies
     setup_environment_files
     setup_git_hooks
-    setup_npm_scripts
+    setup_bun_scripts
     setup_monitoring
     setup_dev_database
     generate_documentation
@@ -605,10 +610,10 @@ main() {
         echo "5. Test the pipeline with a sample commit"
         echo
         log_info "To start development:"
-        echo "npm run dev"
+        echo "bun run dev"
         echo
         log_info "To run tests:"
-        echo "npm run test:backend"
+        echo "bun run test:backend"
         echo
         log_info "To deploy:"
         echo "./scripts/deploy.sh staging latest"

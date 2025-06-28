@@ -27,8 +27,8 @@ Ensure you have the following installed on your development machine:
 # Node.js (v18.0.0 or higher)
 node --version  # Should output v18.x.x or higher
 
-# npm (v8.0.0 or higher)
-npm --version   # Should output 8.x.x or higher
+# Bun (v1.0.0 or higher)
+bun --version   # Should output 1.x.x or higher
 
 # Git
 git --version   # Any recent version
@@ -45,15 +45,15 @@ git clone https://github.com/your-username/students-enrolment.git
 cd students-enrolment
 
 # 2. Install dependencies
-npm install
-cd client && npm install && cd ..
+bun install
+cd client && bun install && cd ..
 
 # 3. Environment configuration
 cp env.example .env
 # Edit .env with your configuration
 
 # 4. Database setup
-npm run migrate
+bun run migrate
 node seed.js
 
 # 5. Create admin user
@@ -62,7 +62,7 @@ node create-admin-interactive.js
 
 # 6. Start the application
 # Development mode (both frontend and backend)
-npm run dev
+bun run dev
 ```
 
 ### Environment Variables
@@ -337,39 +337,39 @@ chore(deps): update dependencies to latest versions
 
 ```bash
 # Backend Development
-npm run server          # Start backend with nodemon
-npm run lint           # Run ESLint
-npm run lint:fix       # Fix ESLint issues
-npm run format         # Format code with Prettier
-npm run format:check   # Check code formatting
+bun run server          # Start backend with nodemon
+bun run lint           # Run ESLint
+bun run lint:fix       # Fix ESLint issues
+bun run format         # Format code with Prettier
+bun run format:check   # Check code formatting
 
 # Frontend Development
-npm run client         # Start React development server
-cd client && npm start # Alternative way to start frontend
+bun run client         # Start React development server
+cd client && bun start # Alternative way to start frontend
 
 # Full Development
-npm run dev           # Start both backend and frontend concurrently
+bun run dev           # Start both backend and frontend concurrently
 
 # Testing
-npm run test:backend      # Run backend tests
-npm run test:frontend     # Run frontend tests
-npm run test:all         # Run all tests
-npm run test:coverage    # Generate test coverage report
+bun run test:backend      # Run backend tests
+bun run test:frontend     # Run frontend tests
+bun run test:all         # Run all tests
+bun run test:coverage    # Generate test coverage report
 
 # Database
-npm run migrate          # Run database migrations
-npm run migrate:status   # Check migration status
-npm run migrate:rollback # Rollback last migration
+bun run migrate          # Run database migrations
+bun run migrate:status   # Check migration status
+bun run migrate:rollback # Rollback last migration
 node seed.js            # Seed database with comprehensive data
 
 # Build & Production
-npm run build           # Build frontend for production
-npm start              # Start production server
+bun run build           # Build frontend for production
+bun start              # Start production server
 
 # Utilities
-npm run health:check    # Check application health
-npm audit              # Check for security vulnerabilities
-npm outdated           # Check for outdated packages
+bun run health:check    # Check application health
+bun audit              # Check for security vulnerabilities
+bun outdated           # Check for outdated packages
 ```
 
 ### Daily Development Routine
@@ -378,16 +378,16 @@ npm outdated           # Check for outdated packages
    ```bash
    git checkout develop
    git pull origin develop
-   npm install  # Update dependencies if needed
-   npm run dev  # Start development servers
+   bun install  # Update dependencies if needed
+   bun run dev  # Start development servers
    ```
 
 2. **Feature Development**
    ```bash
    git checkout -b feature/your-feature-name
    # Make your changes
-   npm run lint
-   npm run test:all
+   bun run lint
+   bun run test:all
    git add .
    git commit -m "feat(scope): your commit message"
    git push origin feature/your-feature-name
@@ -861,22 +861,22 @@ describe('CourseCard', () => {
 
 ```bash
 # Run all tests
-npm run test:all
+bun run test:all
 
 # Run backend tests only
-npm run test:backend
+bun run test:backend
 
 # Run frontend tests only
-npm run test:frontend
+bun run test:frontend
 
 # Run tests with coverage
-npm run test:coverage
+bun run test:coverage
 
 # Run specific test file
-npm test -- tests/routes/auth.test.js
+bun test -- tests/routes/auth.test.js
 
 # Run tests matching pattern
-npm test -- --grep "User validation"
+bun test -- --grep "User validation"
 ```
 
 ---
@@ -1015,44 +1015,45 @@ axios.interceptors.response.use(
 #### Adding New Dependencies
 ```bash
 # Backend dependencies
-npm install package-name
-npm install --save-dev package-name  # Development only
+bun install package-name
+bun install --save-dev package-name  # Development only
 
 # Frontend dependencies
 cd client
-npm install package-name
-npm install --save-dev package-name  # Development only
+bun install package-name
+bun install --save-dev package-name  # Development only
 ```
 
 #### Version Management
 ```bash
 # Check for outdated packages
-npm outdated
+bun outdated
 
 # Update packages
-npm update
+bun update
 
 # Update specific package
-npm install package-name@latest
+bun install package-name@latest
 
 # Check for security vulnerabilities
-npm audit
+bun audit
 
 # Fix vulnerabilities automatically
+# Note: Bun audit fix not yet available, use npm for this
 npm audit fix
 ```
 
 #### Lock File Management
 ```bash
-# Clean install (uses package-lock.json)
-npm ci
+# Clean install (uses bun.lock)
+bun install --frozen-lockfile
 
 # Update lock file
-rm package-lock.json node_modules
-npm install
+rm bun.lock node_modules
+bun install
 
 # Verify lock file integrity
-npm audit
+bun audit
 ```
 
 ### Recommended Packages

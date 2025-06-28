@@ -95,7 +95,7 @@ The Students Online Enrollment System is a modern, scalable web application desi
 
 Ensure you have the following installed:
 - **Node.js** (v18.0.0 or higher)
-- **npm** (v8.0.0 or higher)
+- **Bun** (v1.0.0 or higher) - [Install Bun](https://bun.sh/)
 - **MongoDB** (v6.0 or higher) or MongoDB Atlas account
 - **Git**
 
@@ -109,11 +109,11 @@ Ensure you have the following installed:
 
 2. **Install dependencies**
    ```bash
-   # Install backend dependencies
-   npm install
+# Install backend dependencies
+bun install
    
    # Install frontend dependencies
-   cd client && npm install && cd ..
+   cd client && bun install && cd ..
    ```
 
 3. **Environment setup**
@@ -128,7 +128,7 @@ Ensure you have the following installed:
 4. **Database setup**
    ```bash
    # Run migrations
-   npm run migrate
+   bun run migrate
    
    # Seed initial data (optional)
    node seed-simple.js
@@ -143,11 +143,11 @@ Ensure you have the following installed:
 6. **Start the application**
    ```bash
    # Development mode (both frontend and backend)
-   npm run dev
+   bun run dev
    
    # Or run separately
-   npm run server  # Backend only (http://localhost:5001)
-   npm run client  # Frontend only (http://localhost:3000)
+   bun run server  # Backend only (http://localhost:5001)
+bun run client  # Frontend only (http://localhost:3000)
    ```
 
 7. **Verify installation**
@@ -181,30 +181,30 @@ Ensure you have the following installed:
 
 ```bash
 # Development
-npm run dev          # Start both frontend and backend
-npm run server       # Start backend only
-npm run client       # Start frontend only
+bun run dev          # Start both frontend and backend
+bun run server       # Start backend only
+bun run client       # Start frontend only
 
 # Testing
-npm run test:backend     # Run backend tests
-npm run test:frontend    # Run frontend tests
-npm run test:all         # Run all tests
-npm run test:coverage    # Generate coverage report
+bun run test:backend     # Run backend tests
+bun run test:frontend    # Run frontend tests
+bun run test:all         # Run all tests
+bun run test:coverage    # Generate coverage report
 
 # Code Quality
-npm run lint             # Run ESLint
-npm run lint:fix         # Fix ESLint issues
-npm run format           # Format code with Prettier
-npm run format:check     # Check code formatting
+bun run lint             # Run ESLint
+bun run lint:fix         # Fix ESLint issues
+bun run format           # Format code with Prettier
+bun run format:check     # Check code formatting
 
 # Database
-npm run migrate          # Run database migrations
-npm run migrate:status   # Check migration status
-npm run migrate:rollback # Rollback last migration
+bun run migrate          # Run database migrations
+bun run migrate:status   # Check migration status
+bun run migrate:rollback # Rollback last migration
 
 # Build & Deployment
-npm run build           # Build frontend for production
-npm run start           # Start production server
+bun run build           # Build frontend for production
+bun run start           # Start production server
 ```
 
 ### Project Structure
@@ -250,9 +250,9 @@ students-enrolment/
 ./test-ci-local.sh
 
 # Manual testing
-npm run test:backend
-npm run test:frontend
-npm run test:coverage
+bun run test:backend
+bun run test:frontend
+bun run test:coverage
 ```
 
 ### Test Structure
@@ -302,7 +302,7 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
 3. Make your changes
-4. Run tests (`npm run test:all`)
+4. Run tests (`bun run test:all`)
 5. Commit your changes (`git commit -m 'Add amazing feature'`)
 6. Push to the branch (`git push origin feature/amazing-feature`)
 7. Open a Pull Request

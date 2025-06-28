@@ -48,7 +48,7 @@ We welcome several types of contributions:
 Before contributing, ensure you have:
 
 - **Node.js** (v18.0.0 or higher)
-- **npm** (v8.0.0 or higher)
+- **Bun** (v1.0.0 or higher) - [Install Bun](https://bun.sh/)
 - **Git** (latest version)
 - **MongoDB** (v6.0+ or MongoDB Atlas account)
 
@@ -69,8 +69,8 @@ Before contributing, ensure you have:
 
 4. **Install dependencies**:
    ```bash
-   npm install
-   cd client && npm install && cd ..
+   bun install
+cd client && bun install && cd ..
    ```
 
 5. **Set up environment**:
@@ -81,13 +81,13 @@ Before contributing, ensure you have:
 
 6. **Initialize database**:
    ```bash
-   npm run migrate
+   bun run migrate
    node seed-simple.js
    ```
 
 7. **Start development servers**:
    ```bash
-   npm run dev
+   bun run dev
    ```
 
 8. **Verify setup**:
@@ -187,16 +187,16 @@ We use **ESLint** and **Prettier** to maintain consistent code style:
 
 ```bash
 # Check linting
-npm run lint
+bun run lint
 
 # Fix linting issues
-npm run lint:fix
+bun run lint:fix
 
 # Check formatting
-npm run format:check
+bun run format:check
 
 # Format code
-npm run format
+bun run format
 ```
 
 ### JavaScript Standards
@@ -399,16 +399,16 @@ describe('CourseCard', () => {
 
 ```bash
 # Run all tests
-npm run test:all
+bun run test:all
 
 # Run with coverage
-npm run test:coverage
+bun run test:coverage
 
 # Run specific test file
-npm test -- tests/routes/auth.test.js
+bun test -- tests/routes/auth.test.js
 
 # Watch mode for development
-npm run test:watch
+bun run test:watch
 ```
 
 ---

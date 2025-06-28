@@ -368,7 +368,7 @@ docker-compose pull
 docker-compose up -d
 
 # Security scan
-npm audit
+bun audit
 ```
 
 ## Troubleshooting
@@ -380,19 +380,19 @@ npm audit
 **Linting Errors**
 ```bash
 # Fix automatically
-npm run lint:fix
+bun run lint:fix
 
 # Check manually
-npm run lint
+bun run lint
 ```
 
 **Test Failures**
 ```bash
 # Run tests locally
-npm run test:backend
+bun run test:backend
 
 # Debug specific test
-npm run test:watch -- --testNamePattern="payment"
+bun run test:watch -- --testNamePattern="payment"
 ```
 
 **Build Failures**
@@ -401,7 +401,7 @@ npm run test:watch -- --testNamePattern="payment"
 docker build -t test-build .
 
 # Check frontend build
-cd client && npm run build
+cd client && bun run build
 ```
 
 #### 2. Deployment Issues
@@ -531,13 +531,13 @@ docker exec mongodb mongo --eval "db.runCommand({setParameter: 1, wiredTigerCach
 3. **Testing**
    ```bash
    # Before committing
-   npm run lint
-   npm run test:backend
-   npm run format:check
+   bun run lint
+   bun run test:backend
+   bun run format:check
    
    # Integration testing
    docker-compose up -d
-   npm run test:integration
+   bun run test:integration
    ```
 
 ### Production Deployment
@@ -556,7 +556,7 @@ docker exec mongodb mongo --eval "db.runCommand({setParameter: 1, wiredTigerCach
    git checkout -b release/v1.2.0 develop
    
    # Update version
-   npm version 1.2.0
+   bun version 1.2.0
    
    # Merge to main
    git checkout main

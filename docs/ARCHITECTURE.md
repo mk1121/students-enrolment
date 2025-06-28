@@ -145,7 +145,7 @@ Development Tools:
 ```yaml
 Runtime Environment:
   - Node.js 18.x: JavaScript runtime
-  - NPM: Package management
+  - Bun: Package management
 
 Web Framework:
   - Express.js 4.18: Web application framework
@@ -873,14 +873,14 @@ graph TD
 FROM node:18-alpine AS builder
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci --only=production
+RUN bun install --production --frozen-lockfile
 
 FROM node:18-alpine AS runtime
 WORKDIR /app
 COPY --from=builder /app/node_modules ./node_modules
 COPY . .
 EXPOSE 5001
-CMD ["npm", "start"]
+CMD ["bun", "start"]
 ```
 
 #### Docker Compose
@@ -919,8 +919,8 @@ services:
     name: students-enrollment-api
     env: node
     plan: starter
-    buildCommand: npm install && npm run build
-    startCommand: npm start
+    buildCommand: bun install && bun run build
+startCommand: bun start
     envVars:
       - key: NODE_ENV
         value: production
@@ -1043,10 +1043,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '18'
-          cache: 'npm'
-      - run: npm ci
-      - run: npm run lint
-      - run: npm run format:check
+          cache: 'bun'
+      - run: bun install --frozen-lockfile
+- run: bun run lint
+- run: bun run format:check
 
   test:
     runs-on: ubuntu-latest
@@ -1058,17 +1058,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-      - run: npm ci
-      - run: npm run test:backend
-      - run: npm run test:frontend
+      - run: bun install --frozen-lockfile
+- run: bun run test:backend
+- run: bun run test:frontend
 
   build:
     needs: [lint, test]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: npm ci
-      - run: npm run build
+      - run: bun install --frozen-lockfile
+- run: bun run build
       - uses: actions/upload-artifact@v4
         with:
           name: build-files

@@ -6,32 +6,32 @@ This directory contains comprehensive tests for the Students Enrollment System b
 
 ### Install Dependencies
 ```bash
-npm install
+bun install
 ```
 
 ### Run All Tests
 ```bash
-npm test
+bun test
 ```
 
 ### Run Tests with Coverage
 ```bash
-npm run test:coverage
+bun run test:coverage
 ```
 
 ### Run Specific Test Suites
 ```bash
 # Run only email tests
-npm test -- tests/utils/email.test.js
+bun test -- tests/utils/email.test.js
 
 # Run only auth tests
-npm test -- tests/routes/auth.test.js
+bun test -- tests/routes/auth.test.js
 
 # Run with verbose output
-npm test -- --verbose
+bun test -- --verbose
 
 # Run tests in watch mode
-npm test -- --watch
+bun test -- --watch
 ```
 
 ## Test Structure
@@ -408,7 +408,7 @@ test('should create user asynchronously', async () => {
 ### Coverage Reports
 ```bash
 # Generate coverage report
-npm run test:coverage
+bun run test:coverage
 
 # View HTML report
 open coverage/lcov-report/index.html
@@ -426,10 +426,10 @@ open coverage/lcov-report/index.html
 ### Debug Mode
 ```bash
 # Run tests with debug output
-DEBUG=* npm test
+DEBUG=* bun test
 
 # Run specific test with debugging
-npm test -- --testNamePattern="should register user" --verbose
+bun test -- --testNamePattern="should register user" --verbose
 ```
 
 ### Debug Tools
@@ -469,8 +469,8 @@ jobs:
       - uses: actions/setup-node@v2
         with:
           node-version: '18'
-      - run: npm ci
-      - run: npm run test:coverage
+      - run: bun install --frozen-lockfile
+      - run: bun run test:coverage
       - uses: codecov/codecov-action@v1
 ```
 

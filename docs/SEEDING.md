@@ -20,17 +20,17 @@ The seeding system populates the database with realistic sample data including:
 | `seed.js` | Full comprehensive seeding | ~500+ records | Development, Demo |
 | `seed-simple.js` | Basic essential data | ~50 records | Testing, Quick Setup |
 
-### NPM Scripts
+### Bun Scripts
 
 ```bash
 # Run full seeding
-npm run seed
+bun run seed
 
 # Run simple seeding
-npm run seed:simple
+bun run seed:simple
 
 # Clear database and reseed
-npm run seed:fresh
+bun run seed:fresh
 ```
 
 ### Direct Execution
@@ -161,7 +161,7 @@ The simple seeding script provides minimal essential data:
 
 ```bash
 # For quick development setup
-npm run seed:simple
+bun run seed:simple
 
 # Or directly
 node seed-simple.js
@@ -391,26 +391,26 @@ async function seedUsers() {
 
 ```bash
 # Fresh development setup
-npm run db:reset      # Clear database
-npm run migrate:run   # Run migrations
-npm run seed         # Seed with sample data
-npm run dev          # Start development server
+bun run db:reset      # Clear database
+bun run migrate:run   # Run migrations
+bun run seed         # Seed with sample data
+bun run dev          # Start development server
 ```
 
 ### 2. Testing Setup
 
 ```bash
 # Before running tests
-npm run seed:simple   # Quick minimal data
-npm test             # Run test suite
+bun run seed:simple   # Quick minimal data
+bun test             # Run test suite
 ```
 
 ### 3. Demo Preparation
 
 ```bash
 # Prepare for demonstration
-npm run seed          # Full rich dataset
-npm run migrate:run   # Ensure schema is current
+bun run seed          # Full rich dataset
+bun run migrate:run   # Ensure schema is current
 ```
 
 ## Troubleshooting

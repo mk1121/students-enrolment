@@ -6,13 +6,13 @@ This guide provides comprehensive information about the database migration syste
 
 ```bash
 # Check current migration status
-npm run migrate:status
+bun run migrate:status
 
 # Run all pending migrations
-npm run migrate:run
+bun run migrate:run
 
 # Rollback last migration if needed
-npm run migrate:rollback
+bun run migrate:rollback
 ```
 
 ## Migration System Overview
@@ -49,19 +49,19 @@ node migrate.js
 
 # Check migration status
 node migrate.js status
-npm run migrate:status
+bun run migrate:status
 
 # Run pending migrations
 node migrate.js run
-npm run migrate:run
+bun run migrate:run
 
 # Rollback migrations
 node migrate.js rollback [count]
-npm run migrate:rollback [count]
+bun run migrate:rollback [count]
 
 # Reset all migrations
 node migrate.js reset
-npm run migrate:reset
+bun run migrate:reset
 ```
 
 ### Advanced Usage
@@ -377,10 +377,10 @@ module.exports = {
 mongodump --uri="$MONGODB_URI" --out "backup-$(date +%Y%m%d-%H%M%S)"
 
 # 2. Run migration
-npm run migrate:run
+bun run migrate:run
 
 # 3. Verify application health
-npm run health-check
+bun run health-check
 
 # 4. Monitor logs
 tail -f logs/application.log

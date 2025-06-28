@@ -151,16 +151,16 @@ The current test suite provides:
 
 ```bash
 # Run all tests
-npm test
+bun test
 
 # Run with coverage
-npm run test:coverage
+bun run test:coverage
 
 # Run in watch mode  
-npm run test:watch
+bun run test:watch
 
 # Run specific test file
-npm test tests/models/User.test.js
+bun test tests/models/User.test.js
 ```
 
 ## 📧 **Note on Email Errors**

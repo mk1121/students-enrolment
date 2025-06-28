@@ -16,19 +16,19 @@ The testing suite covers all aspects of the application including:
 
 ```bash
 # Install dependencies
-npm install
+bun install
 
 # Run all tests
-npm test
+bun test
 
 # Run with coverage
-npm run test:coverage
+bun run test:coverage
 
 # Run specific test suite
-npm test -- tests/utils/email.test.js
+bun test -- tests/utils/email.test.js
 
 # Run in watch mode
-npm test -- --watch
+bun test -- --watch
 ```
 
 ## Test Environment Setup
@@ -646,13 +646,13 @@ const criticalAreas = [
 ### Coverage Commands
 ```bash
 # Generate detailed coverage report
-npm run test:coverage
+bun run test:coverage
 
 # View HTML coverage report
 open coverage/lcov-report/index.html
 
 # Check coverage for specific files
-npm run test:coverage -- --collectCoverageFrom="server/utils/email.js"
+bun run test:coverage -- --collectCoverageFrom="server/utils/email.js"
 ```
 
 ## Continuous Integration
@@ -678,13 +678,13 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
-          cache: 'npm'
+          cache: 'bun'
       
       - name: Install dependencies
-        run: npm ci
+        run: bun install --frozen-lockfile
       
       - name: Run tests
-        run: npm run test:coverage
+        run: bun run test:coverage
         env:
           NODE_ENV: test
           JWT_SECRET: test-jwt-secret
@@ -723,10 +723,10 @@ module.exports = {
 node --inspect-brk node_modules/.bin/jest --runInBand
 
 # Run specific test with debugging
-npm test -- --testNamePattern="should send email verification" --verbose
+bun test -- --testNamePattern="should send email verification" --verbose
 
 # Debug with additional logging
-DEBUG=* npm test
+DEBUG=* bun test
 ```
 
 This comprehensive testing documentation covers all aspects of OAuth2 Gmail integration testing, email verification workflows, and provides the foundation for maintaining high-quality, well-tested email functionality in the Students Enrollment System. 

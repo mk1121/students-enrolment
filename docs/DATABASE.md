@@ -972,13 +972,13 @@ module.exports = {
 #### Running Migrations
 ```bash
 # Run all pending migrations
-npm run migrate
+bun run migrate
 
 # Check migration status
-npm run migrate:status
+bun run migrate:status
 
 # Rollback last migration
-npm run migrate:rollback
+bun run migrate:rollback
 ```
 
 ---
