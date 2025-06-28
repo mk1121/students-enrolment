@@ -6,32 +6,28 @@ require('dotenv').config();
 // Create readline interface
 const rl = readline.createInterface({
   input: process.stdin,
-  output: process.stdout,
+  output: process.stdout
 });
 
 // Helper function to ask questions
-const askQuestion = question => {
-  return new Promise(resolve => {
-    rl.question(question, answer => {
+const askQuestion = (question) => {
+  return new Promise((resolve) => {
+    rl.question(question, (answer) => {
       resolve(answer.trim());
     });
   });
 };
 
 // Connect to MongoDB
-mongoose
-  .connect(
-    process.env.MONGODB_URI || 'mongodb://localhost:27017/students-enrollment',
-    {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    }
-  )
-  .then(() => console.log('✅ MongoDB Connected'))
-  .catch(err => {
-    console.log('❌ MongoDB Connection Error:', err);
-    process.exit(1);
-  });
+mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/students-enrollment', {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+})
+.then(() => console.log('✅ MongoDB Connected'))
+.catch(err => {
+  console.log('❌ MongoDB Connection Error:', err);
+  process.exit(1);
+});
 
 // Create admin user interactively
 const createAdminInteractive = async () => {
@@ -53,9 +49,7 @@ const createAdminInteractive = async () => {
 
     // Validate required fields
     if (!firstName || !lastName || !email || !password) {
-      console.log(
-        '❌ First name, last name, email, and password are required!'
-      );
+      console.log('❌ First name, last name, email, and password are required!');
       rl.close();
       mongoose.connection.close();
       process.exit(1);
@@ -95,8 +89,8 @@ const createAdminInteractive = async () => {
         city,
         state,
         zipCode,
-        country,
-      },
+        country
+      }
     };
 
     // Create new admin user
@@ -108,12 +102,10 @@ const createAdminInteractive = async () => {
     console.log('🔑 Password:', password);
     console.log('👤 Role:', admin.role);
     console.log('📱 Phone:', admin.phone || 'Not provided');
-    console.log(
-      '📍 Address:',
-      `${admin.address.street}, ${admin.address.city}, ${admin.address.state} ${admin.address.zipCode}, ${admin.address.country}`
-    );
+    console.log('📍 Address:', `${admin.address.street}, ${admin.address.city}, ${admin.address.state} ${admin.address.zipCode}, ${admin.address.country}`);
     console.log('\n⚠️  Please change the password after first login!');
     console.log('\n🔗 You can now login at: http://localhost:3000/login');
+
   } catch (error) {
     console.error('\n❌ Error creating admin user:', error.message);
     if (error.code === 11000) {
@@ -127,4 +119,4 @@ const createAdminInteractive = async () => {
 };
 
 // Run the script
-createAdminInteractive();
+createAdminInteractive(); 
