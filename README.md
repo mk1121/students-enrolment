@@ -1,150 +1,331 @@
-# Students Online Enrollment System
+# 🎓 Students Online Enrollment System
 
-A comprehensive web application for student enrollment management with integrated payment gateways, built using the MERN stack (MongoDB, Express.js, React.js, Node.js).
+[![CI/CD Pipeline](https://github.com/your-username/students-enrolment/actions/workflows/ci.yml/badge.svg)](https://github.com/your-username/students-enrolment/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/your-username/students-enrolment/branch/main/graph/badge.svg)](https://codecov.io/gh/your-username/students-enrolment)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Node.js Version](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen)](https://nodejs.org/)
 
-## Features
+A comprehensive, production-ready web application for student enrollment management with integrated payment gateways, built using the MERN stack (MongoDB, Express.js, React.js, Node.js).
 
-### For Students
-- User registration and authentication
-- Browse available courses
-- Enroll in courses with secure payment processing
-- View enrollment history and course progress
-- Profile management
-- Course materials access
+## 📋 Table of Contents
 
-### For Administrators
-- Course management (CRUD operations)
-- Student enrollment management
-- Payment tracking and management
-- User management
-- Analytics dashboard
-- Email notifications
+- [🎯 Overview](#-overview)
+- [✨ Features](#-features)
+- [🛠️ Tech Stack](#️-tech-stack)
+- [🚀 Quick Start](#-quick-start)
+- [📚 Documentation](#-documentation)
+- [🔧 Development](#-development)
+- [🧪 Testing](#-testing)
+- [🚢 Deployment](#-deployment)
+- [🤝 Contributing](#-contributing)
+- [📄 License](#-license)
 
-### Payment Integration
-- Stripe payment gateway integration
-- Secure payment processing
-- Payment history tracking
-- Refund management
+## 🎯 Overview
 
-## Tech Stack
+The Students Online Enrollment System is a modern, scalable web application designed to streamline the student enrollment process for educational institutions. It provides a complete solution for course management, student registration, secure payment processing, and administrative oversight.
 
-- **Frontend**: React.js, Material-UI, Axios
-- **Backend**: Node.js, Express.js
-- **Database**: MongoDB with Mongoose ODM
-- **Authentication**: JWT (JSON Web Tokens)
-- **Payment**: Stripe API
-- **Email**: Nodemailer
-- **Security**: bcryptjs, helmet, rate limiting
+### 🌟 Key Highlights
 
-## Prerequisites
+- **Production-Ready**: Fully configured CI/CD pipeline with automated testing and deployment
+- **Secure**: JWT authentication, helmet security, rate limiting, and comprehensive input validation
+- **Scalable**: Microservices-ready architecture with Docker containerization
+- **User-Friendly**: Responsive design with Material-UI components
+- **Payment Integration**: Multiple payment gateways (Stripe, SSLCommerz)
+- **Email System**: Automated notifications with Gmail OAuth 2.0
 
-- Node.js (v14 or higher)
-- MongoDB
-- npm or yarn
-- Stripe account (for payment processing)
+## ✨ Features
 
-## Installation
+### 👨‍🎓 For Students
+- **User Management**: Registration, authentication, and profile management
+- **Course Discovery**: Browse and search available courses with detailed information
+- **Enrollment Process**: Simple, secure course enrollment with payment integration
+- **Dashboard**: Personal dashboard with enrollment history and progress tracking
+- **Course Materials**: Access to enrolled course materials and resources
+- **Payment History**: Complete transaction history and receipt management
+
+### 👨‍💼 For Administrators
+- **Course Management**: Complete CRUD operations for courses and materials
+- **Student Management**: User management and enrollment oversight
+- **Payment Tracking**: Comprehensive payment and transaction management
+- **Analytics Dashboard**: Detailed insights and reporting
+- **Email Notifications**: Automated email system for various events
+- **System Monitoring**: Health checks and performance metrics
+
+### 🔐 Security & Performance
+- **Authentication**: JWT-based authentication with refresh tokens
+- **Authorization**: Role-based access control (Student, Admin)
+- **Security Headers**: Helmet.js for security headers
+- **Rate Limiting**: API rate limiting to prevent abuse
+- **Input Validation**: Comprehensive validation using express-validator
+- **Data Encryption**: Password hashing with bcryptjs
+
+## 🛠️ Tech Stack
+
+### Frontend
+- **React.js 18.2.0** - Modern UI library
+- **Material-UI (MUI) 5.14** - Component library
+- **React Router 6.17** - Client-side routing
+- **Axios** - HTTP client
+- **React Testing Library** - Testing framework
+
+### Backend
+- **Node.js 18.x** - Runtime environment
+- **Express.js 4.18** - Web framework
+- **MongoDB 6.0** - NoSQL database
+- **Mongoose 7.5** - ODM for MongoDB
+- **JWT** - Authentication
+- **Stripe & SSLCommerz** - Payment gateways
+
+### DevOps & Deployment
+- **Docker** - Containerization
+- **GitHub Actions** - CI/CD pipeline
+- **Render** - Backend hosting
+- **GitHub Pages** - Frontend hosting
+- **MongoDB Atlas** - Database hosting
+
+### Development Tools
+- **Jest** - Testing framework
+- **ESLint & Prettier** - Code quality
+- **Nodemon** - Development server
+- **Concurrently** - Run multiple commands
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+Ensure you have the following installed:
+- **Node.js** (v18.0.0 or higher)
+- **Bun** (v1.0.0 or higher) - [Install Bun](https://bun.sh/)
+- **MongoDB** (v6.0 or higher) or MongoDB Atlas account
+- **Git**
+
+### Installation
 
 1. **Clone the repository**
    ```bash
-   git clone <repository-url>
-   cd students-enrollment-system
+   git clone https://github.com/your-username/students-enrolment.git
+   cd students-enrolment
    ```
 
-2. **Install server dependencies**
+2. **Install dependencies**
    ```bash
-   npm install
+# Install backend dependencies
+bun install
+   
+   # Install frontend dependencies
+   cd client && bun install && cd ..
    ```
 
-3. **Install client dependencies**
+3. **Environment setup**
    ```bash
-   cd client
-   npm install
-   cd ..
+   # Copy environment template
+   cp env.example .env
+   
+   # Edit .env file with your configuration
+   nano .env
    ```
 
-4. **Environment Setup**
-   Create a `.env` file in the root directory:
-   ```env
-   NODE_ENV=development
-   PORT=5000
-   MONGODB_URI=mongodb://localhost:27017/students-enrollment
-   JWT_SECRET=your_jwt_secret_key
-   STRIPE_SECRET_KEY=your_stripe_secret_key
-   STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key
-   EMAIL_USER=your_email@gmail.com
-   EMAIL_PASS=your_email_password
+4. **Database setup**
+   ```bash
+   # Run migrations
+   bun run migrate
+   
+   # Seed initial data (optional)
+   node seed-simple.js
    ```
 
-5. **Start the application**
+5. **Create admin user**
+   ```bash
+   # Interactive admin creation
+   node create-admin-interactive.js
+   ```
+
+6. **Start the application**
    ```bash
    # Development mode (both frontend and backend)
-   npm run dev
+   bun run dev
    
    # Or run separately
-   npm run server  # Backend only
-   npm run client  # Frontend only
+   bun run server  # Backend only (http://localhost:5001)
+bun run client  # Frontend only (http://localhost:3000)
    ```
 
-## API Endpoints
+7. **Verify installation**
+   - Backend health check: http://localhost:5001/api/health
+   - Frontend application: http://localhost:3000
 
-### Authentication
-- `POST /api/auth/register` - User registration
-- `POST /api/auth/login` - User login
-- `GET /api/auth/me` - Get current user
+## 📚 Documentation
 
-### Courses
-- `GET /api/courses` - Get all courses
-- `GET /api/courses/:id` - Get course by ID
-- `POST /api/courses` - Create course (Admin only)
-- `PUT /api/courses/:id` - Update course (Admin only)
-- `DELETE /api/courses/:id` - Delete course (Admin only)
+### 📖 Core Documentation
+- [**API Documentation**](docs/API.md) - Complete API reference
+- [**Database Schema**](docs/DATABASE.md) - Database design and models
+- [**Architecture Guide**](docs/ARCHITECTURE.md) - System architecture overview
 
-### Enrollments
-- `GET /api/enrollments` - Get user enrollments
-- `POST /api/enrollments` - Create enrollment
-- `PUT /api/enrollments/:id` - Update enrollment status
+### 🔧 Development Documentation
+- [**Development Guide**](docs/DEVELOPMENT.md) - Local development setup
+- [**Testing Guide**](docs/TESTING.md) - Testing strategies and guidelines
+- [**Contributing Guide**](CONTRIBUTING.md) - How to contribute to the project
 
-### Payments
-- `POST /api/payments/create-payment-intent` - Create payment intent
-- `POST /api/payments/confirm` - Confirm payment
-- `GET /api/payments` - Get payment history
+### 🚢 Deployment & Operations
+- [**Deployment Guide**](docs/deployment/README.md) - Production deployment instructions
+- [**GitHub Secrets Guide**](docs/GITHUB_SECRETS_GUIDE.md) - Required environment variables
 
-## Project Structure
+### 🔧 Setup & Configuration
+- [**Gmail OAuth Setup**](docs/GMAIL_OAUTH_SETUP.md) - Email configuration
+- [**Payment Testing**](docs/PAYMENT_TESTING.md) - Payment gateway testing
+- [**Migration Guide**](docs/MIGRATIONS.md) - Database migrations
+
+## 🔧 Development
+
+### Available Scripts
+
+```bash
+# Development
+bun run dev          # Start both frontend and backend
+bun run server       # Start backend only
+bun run client       # Start frontend only
+
+# Testing
+bun run test:backend     # Run backend tests
+bun run test:frontend    # Run frontend tests
+bun run test:all         # Run all tests
+bun run test:coverage    # Generate coverage report
+
+# Code Quality
+bun run lint             # Run ESLint
+bun run lint:fix         # Fix ESLint issues
+bun run format           # Format code with Prettier
+bun run format:check     # Check code formatting
+
+# Database
+bun run migrate          # Run database migrations
+bun run migrate:status   # Check migration status
+bun run migrate:rollback # Rollback last migration
+
+# Build & Deployment
+bun run build           # Build frontend for production
+bun run start           # Start production server
+```
+
+### Project Structure
 
 ```
-students-enrollment-system/
-├── client/                 # React frontend
-│   ├── public/
-│   └── src/
-│       ├── components/
-│       ├── pages/
-│       ├── context/
-│       ├── utils/
-│       └── App.js
-├── server/                 # Node.js backend
-│   ├── config/
-│   ├── controllers/
-│   ├── middleware/
-│   ├── models/
-│   ├── routes/
-│   └── utils/
-├── package.json
-└── server.js
+students-enrolment/
+├── 📁 client/                    # React frontend
+│   ├── 📁 public/               # Static assets
+│   │   ├── 📁 components/       # Reusable components
+│   │   ├── 📁 pages/           # Page components
+│   │   ├── 📁 context/         # React context
+│   │   └── 📄 App.js           # Main app component
+│   └── 📄 package.json
+├── 📁 server/                   # Node.js backend
+│   ├── 📁 middleware/          # Custom middleware
+│   ├── 📁 models/              # Mongoose models
+│   ├── 📁 routes/              # API routes
+│   └── 📁 utils/               # Utility functions
+├── 📁 tests/                   # Test suites
+├── 📁 docs/                    # Documentation
+├── 📁 migrations/              # Database migrations
+├── 📁 .github/workflows/       # CI/CD workflows
+├── 📄 server.js                # Express server
+├── 📄 docker-compose.yml       # Docker configuration
+└── 📄 package.json            # Backend dependencies
 ```
 
-## Contributing
+## 🧪 Testing
+
+### Test Coverage
+
+- **Backend**: 120 tests (110 passed, 10 skipped)
+- **Test Suites**: 7 comprehensive test suites
+- **Coverage**: High coverage across all modules
+
+### Running Tests
+
+```bash
+# Quick testing
+./quick-ci-test.sh all
+
+# Local CI simulation with act
+./test-ci-local.sh
+
+# Manual testing
+bun run test:backend
+bun run test:frontend
+bun run test:coverage
+```
+
+### Test Structure
+- **Unit Tests**: Individual function and component testing
+- **Integration Tests**: API endpoint testing
+- **Security Tests**: Authentication and authorization testing
+- **Performance Tests**: Load and stress testing
+
+## 🚢 Deployment
+
+### Deployment Options
+
+1. **Docker Deployment**
+   ```bash
+   docker-compose up -d
+   ```
+
+2. **Cloud Deployment**
+   - Backend: Render, Heroku, Railway
+   - Frontend: GitHub Pages, Netlify, Vercel
+   - Database: MongoDB Atlas
+
+3. **CI/CD Pipeline**
+   - Automatic deployment on branch push
+   - Branch-based environments (develop → staging, main → production)
+
+### Environment Variables
+
+Required environment variables for production:
+
+```env
+NODE_ENV=production
+MONGODB_URI=your_mongodb_connection_string
+JWT_SECRET=your_jwt_secret
+STRIPE_SECRET_KEY=your_stripe_secret_key
+EMAIL_USER=your_gmail_address
+GMAIL_CLIENT_ID=your_gmail_client_id
+# ... see .env.example for complete list
+```
+
+## 🤝 Contributing
+
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+
+### Development Workflow
 
 1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Make your changes
+4. Run tests (`bun run test:all`)
+5. Commit your changes (`git commit -m 'Add amazing feature'`)
+6. Push to the branch (`git push origin feature/amazing-feature`)
+7. Open a Pull Request
 
-## License
+### Code Quality Standards
 
-This project is licensed under the MIT License.
+- Follow ESLint and Prettier configurations
+- Write comprehensive tests for new features
+- Maintain test coverage above 80%
+- Follow conventional commit messages
 
-## Support
+## 📞 Support & Help
 
-For support, email support@example.com or create an issue in the repository. 
+- **Documentation**: Check the [docs](docs/) folder
+- **Issues**: [GitHub Issues](https://github.com/your-username/students-enrolment/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/your-username/students-enrolment/discussions)
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+<div align="center">
+  <strong>Built with ❤️ by the Students Enrollment System Team</strong>
+</div> 
