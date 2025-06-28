@@ -95,6 +95,10 @@ install_dev_tools() {
     
     # Install system dependencies
     sudo apt-get update
+    if ! sudo apt-get install -y netcat-openbsd; then
+        echo "Failed to install netcat-openbsd. Please check your package sources or try installing netcat-traditional."
+        exit 1
+    fi
     sudo apt-get install -y \
         curl \
         wget \
@@ -102,8 +106,7 @@ install_dev_tools() {
         jq \
         unzip \
         build-essential \
-        python3-pip \
-        netcat
+        python3-pip
     
     # Install global npm packages
     npm install -g \

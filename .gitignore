@@ -5,6 +5,12 @@ node_modules
 token.json
 credentials.json
 
+# Build directories and distribution files
+build/
+dist/
+client/build/
+client/dist/
+
 # Coverage reports
 coverage/
 
@@ -33,10 +39,14 @@ pids
 .yarn-integrity
 
 # dotenv environment variables file
+.env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
+
+# act local testing secrets
+.secrets
 
 # IDE files
 .vscode/
@@ -52,3 +62,10 @@ pids
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# Client environment files (contain sensitive data)
+client/.env
+client/.env.development
+client/.env.production
+client/.env.local
+client/.env.*.local
