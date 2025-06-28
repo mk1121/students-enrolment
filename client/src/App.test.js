@@ -112,7 +112,13 @@ jest.mock('./pages/Admin/Payments', () => {
 
 jest.mock('./components/Layout/Layout', () => {
   return function Layout({ children }) {
-    return <div data-testid="layout">{children}</div>;
+    const { Outlet } = require('react-router-dom');
+    return (
+      <div data-testid="layout">
+        {children}
+        <Outlet />
+      </div>
+    );
   };
 });
 
