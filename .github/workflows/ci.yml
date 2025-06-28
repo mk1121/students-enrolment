@@ -311,9 +311,12 @@ jobs:
         env:
           REACT_APP_API_URL: ${{ secrets.RENDER_STAGING_URL }}
           REACT_APP_STRIPE_PUBLISHABLE_KEY: ${{ secrets.STRIPE_PUBLISHABLE_KEY_TEST }}
-          PUBLIC_URL: /students-enrolment/staging
+          PUBLIC_URL: /staging
           ESLINT_NO_DEV_ERRORS: true
           TSC_COMPILE_ON_ERROR: true
+          
+      - name: Copy CNAME file for staging
+        run: cp CNAME ./client/build/CNAME
           
       - name: Deploy to GitHub Pages (Staging)
         uses: peaceiris/actions-gh-pages@v3
@@ -375,9 +378,12 @@ jobs:
         env:
           REACT_APP_API_URL: ${{ secrets.RENDER_PRODUCTION_URL }}
           REACT_APP_STRIPE_PUBLISHABLE_KEY: ${{ secrets.STRIPE_PUBLISHABLE_KEY_LIVE }}
-          PUBLIC_URL: /students-enrolment
+          PUBLIC_URL: /
           ESLINT_NO_DEV_ERRORS: true
           TSC_COMPILE_ON_ERROR: true
+          
+      - name: Copy CNAME file for production
+        run: cp CNAME ./client/build/CNAME
           
       - name: Deploy to GitHub Pages (Production)
         uses: peaceiris/actions-gh-pages@v3
@@ -385,7 +391,6 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./client/build
           publish_branch: gh-pages
-          destination_dir: production
 
   # Job 11: Notifications
   notify-success:
