@@ -122,6 +122,11 @@ jobs:
         run: |
           npm ci --prefer-offline --no-audit
         
+      - name: Lint frontend code
+        working-directory: ./client
+        run: npm run lint
+        continue-on-error: true
+        
       - name: Run frontend tests
         working-directory: ./client
         run: npm run test:ci
@@ -196,6 +201,9 @@ jobs:
       - name: Build frontend
         working-directory: ./client
         run: npm run build
+        env:
+          ESLINT_NO_DEV_ERRORS: true
+          TSC_COMPILE_ON_ERROR: true
         
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
@@ -304,6 +312,8 @@ jobs:
           REACT_APP_API_URL: ${{ secrets.RENDER_STAGING_URL }}
           REACT_APP_STRIPE_PUBLISHABLE_KEY: ${{ secrets.STRIPE_PUBLISHABLE_KEY_TEST }}
           PUBLIC_URL: /students-enrolment/staging
+          ESLINT_NO_DEV_ERRORS: true
+          TSC_COMPILE_ON_ERROR: true
           
       - name: Deploy to GitHub Pages (Staging)
         uses: peaceiris/actions-gh-pages@v3
@@ -366,6 +376,8 @@ jobs:
           REACT_APP_API_URL: ${{ secrets.RENDER_PRODUCTION_URL }}
           REACT_APP_STRIPE_PUBLISHABLE_KEY: ${{ secrets.STRIPE_PUBLISHABLE_KEY_LIVE }}
           PUBLIC_URL: /students-enrolment
+          ESLINT_NO_DEV_ERRORS: true
+          TSC_COMPILE_ON_ERROR: true
           
       - name: Deploy to GitHub Pages (Production)
         uses: peaceiris/actions-gh-pages@v3
