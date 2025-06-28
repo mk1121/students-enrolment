@@ -2,7 +2,7 @@
   "name": "students-enrollment-client",
   "version": "1.0.0",
   "private": true,
-  "homepage": "https://your-username.github.io/students-enrolment",
+  "homepage": "https://project-dev-std-enroll.maruf.com.bd",
   "dependencies": {
     "@emotion/react": "^11.11.1",
     "@emotion/styled": "^11.11.0",
@@ -31,7 +31,11 @@
     "test:ci": "react-scripts test --coverage --watchAll=false --passWithNoTests",
     "lint": "eslint src --ext .js,.jsx,.ts,.tsx",
     "lint:fix": "eslint src --ext .js,.jsx,.ts,.tsx --fix",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d build",
+    "deploy:staging": "gh-pages -d build -b gh-pages",
+    "deploy:production": "gh-pages -d build -b gh-pages-production --dest production"
   },
   "eslintConfig": {
     "extends": [
@@ -51,5 +55,8 @@
       "last 1 safari version"
     ]
   },
-  "proxy": "http://localhost:5001"
+  "devDependencies": {
+    "gh-pages": "^6.1.0"
+  },
+  "proxy": "https://students-enrolment-develop.onrender.com"
 }
