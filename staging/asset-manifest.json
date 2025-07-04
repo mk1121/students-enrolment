@@ -1,13 +1,13 @@
 {
   "files": {
     "main.css": "/staging/static/css/main.26faccad.css",
-    "main.js": "/staging/static/js/main.c04eaef6.js",
+    "main.js": "/staging/static/js/main.1ad6ffb6.js",
     "index.html": "/staging/index.html",
     "main.26faccad.css.map": "/staging/static/css/main.26faccad.css.map",
-    "main.c04eaef6.js.map": "/staging/static/js/main.c04eaef6.js.map"
+    "main.1ad6ffb6.js.map": "/staging/static/js/main.1ad6ffb6.js.map"
   },
   "entrypoints": [
     "static/css/main.26faccad.css",
-    "static/js/main.c04eaef6.js"
+    "static/js/main.1ad6ffb6.js"
   ]
 }
