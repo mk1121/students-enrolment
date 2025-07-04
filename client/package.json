@@ -25,17 +25,17 @@
     "web-vitals": "^3.4.0"
   },
   "scripts": {
-    "start": "bun react-scripts start",
-    "build": "bun react-scripts build",
-    "test": "bun react-scripts test",
-    "test:ci": "bun react-scripts test --coverage --watchAll=false --passWithNoTests",
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "test:ci": "react-scripts test --coverage --watchAll=false --passWithNoTests",
     "lint": "eslint src --ext .js,.jsx,.ts,.tsx",
     "lint:fix": "eslint src --ext .js,.jsx,.ts,.tsx --fix",
-    "eject": "bun react-scripts eject",
+    "eject": "react-scripts eject",
     "predeploy": "bun run build",
-    "deploy": "bun gh-pages -d build",
-    "deploy:staging": "bun gh-pages -d build -b gh-pages",
-    "deploy:production": "bun gh-pages -d build -b gh-pages-production --dest production"
+    "deploy": "gh-pages -d build",
+    "deploy:staging": "gh-pages -d build -b gh-pages",
+    "deploy:production": "gh-pages -d build -b gh-pages-production --dest production"
   },
   "eslintConfig": {
     "extends": [
