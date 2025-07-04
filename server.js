@@ -38,13 +38,56 @@ app.use('/api/', limiter);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
+// Health check endpoint (before other routes)
+app.get('/health', (req, res) => {
+  res
+    .status(200)
+    .json({ status: 'healthy', timestamp: new Date().toISOString() });
+});
+
+// Root endpoint to check if server is running
+app.get('/', (req, res) => {
+  res.json({
+    message: 'Students Enrollment System API',
+    version: '1.0.0',
+    endpoints: {
+      health: '/health',
+      api: '/api',
+      auth: '/api/auth',
+      courses: '/api/courses',
+      enrollments: '/api/enrollments',
+      payments: '/api/payments',
+      users: '/api/users',
+    },
+  });
+});
+
 // CORS middleware
 app.use(
   cors({
-    origin:
-      process.env.NODE_ENV === 'production'
-        ? process.env.CLIENT_URL
-        : 'http://localhost:3000',
+    origin: function (origin, callback) {
+      // Allow requests with no origin (like mobile apps or Postman)
+      if (!origin) return callback(null, true);
+
+      const allowedOrigins = [
+        'http://localhost:3000',
+        'http://localhost:3001',
+        process.env.CLIENT_URL,
+        'https://project-dev-std-enroll.maruf.com.bd',
+        // Add your actual frontend domain here
+      ].filter(Boolean); // Remove any undefined/null values
+
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        // In development, allow all origins
+        if (process.env.NODE_ENV !== 'production') {
+          callback(null, true);
+        } else {
+          callback(new Error('Not allowed by CORS'));
+        }
+      }
+    },
     credentials: true,
   })
 );
@@ -68,6 +111,14 @@ app.use('/api/enrollments', enrollmentRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/payments/sslcommerz', sslcommerzRoutes);
 app.use('/api/users', userRoutes);
+
+// Method not allowed handler for API routes
+app.all('/api/*', (req, res) => {
+  res.status(405).json({
+    message: `Method ${req.method} not allowed for ${req.path}`,
+    allowedMethods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+  });
+});
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

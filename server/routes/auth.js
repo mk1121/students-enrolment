@@ -9,6 +9,24 @@ const { sendEmail } = require('../utils/email');
 // eslint-disable-next-line new-cap
 const router = express.Router();
 
+// Test route to verify auth routes are working
+router.get('/test', (req, res) => {
+  res.json({
+    message: 'Auth routes are working',
+    timestamp: new Date().toISOString(),
+    methods: {
+      'POST /register': 'Register a new user',
+      'POST /login': 'Login user',
+      'POST /logout': 'Logout user',
+      'POST /forgot-password': 'Request password reset',
+      'POST /reset-password': 'Reset password',
+      'GET /me': 'Get current user',
+      'PUT /me': 'Update current user',
+      'POST /change-password': 'Change password',
+    },
+  });
+});
+
 // Generate JWT token
 function generateToken(userId) {
   return jwt.sign({ userId }, process.env.JWT_SECRET, {
