@@ -1,0 +1,415 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+env:
+  NODE_VERSION: '20.x'
+  BUN_VERSION: 'latest'
+  MONGODB_VERSION: '6.0'
+
+jobs:
+  # Job 1: Linting and Code Quality
+  lint:
+    name: Code Quality & Linting
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+          
+      - name: Install dependencies
+        run: |
+          bun install --frozen-lockfile
+        
+      - name: Run ESLint
+        run: bun run lint
+        continue-on-error: false
+        
+      - name: Check code formatting with Prettier
+        run: bun run format:check
+        continue-on-error: false
+
+  # Job 2: Backend Testing
+  test-backend:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+    needs: lint
+    
+    services:
+      mongodb:
+        image: mongo:6.0
+        env:
+          MONGO_INITDB_ROOT_USERNAME: testuser
+          MONGO_INITDB_ROOT_PASSWORD: testpass
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --eval 'db.runCommand({ping: 1})'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+          
+      - name: Install dependencies
+        run: |
+          bun install --frozen-lockfile
+        
+      - name: Wait for MongoDB
+        run: |
+          timeout 30 sh -c 'until nc -z localhost 27017; do sleep 1; done'
+          
+      - name: Run backend tests
+        run: bun run test:backend
+        env:
+          NODE_ENV: test
+          MONGODB_URI: mongodb://testuser:testpass@localhost:27017/test_db?authSource=admin
+          JWT_SECRET: test-jwt-secret-for-ci
+          STRIPE_SECRET_KEY: sk_test_fake_key_for_ci
+          STRIPE_WEBHOOK_SECRET: whsec_fake_webhook_secret
+          EMAIL_FROM: test@ci.com
+          EMAIL_HOST: smtp.test.com
+          EMAIL_PORT: 587
+          EMAIL_USER: testuser
+          EMAIL_PASS: testpass
+          
+      - name: Generate test coverage
+        run: bun run test:coverage
+        
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage/lcov.info
+          flags: backend
+          name: backend-coverage
+
+  # Job 3: Frontend Testing
+  test-frontend:
+    name: Frontend Tests
+    runs-on: ubuntu-latest
+    needs: lint
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+          
+      - name: Install frontend dependencies
+        working-directory: ./client
+        run: |
+          bun install --frozen-lockfile
+        
+      - name: Lint frontend code
+        working-directory: ./client
+        run: bun run lint
+        continue-on-error: true
+        
+      - name: Run frontend tests
+        working-directory: ./client
+        run: bun run test:ci
+        env:
+          CI: true
+          NODE_ENV: test
+        
+      - name: Upload frontend coverage
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./client/coverage/lcov.info
+          flags: frontend
+          name: frontend-coverage
+
+  # Job 4: Security Scanning
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    needs: lint
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+          
+      - name: Install dependencies
+        run: |
+          bun install --frozen-lockfile
+        
+      - name: Run bun audit
+        run: bun audit
+        continue-on-error: true
+        
+      - name: Run Snyk security scan
+        uses: snyk/actions/node@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high
+        continue-on-error: true
+
+  # Job 5: Build Application
+  build:
+    name: Build Application
+    runs-on: ubuntu-latest
+    needs: [test-backend, test-frontend]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+          
+      - name: Install backend dependencies
+        run: |
+          bun install --frozen-lockfile
+        
+      - name: Install frontend dependencies
+        working-directory: ./client
+        run: |
+          bun install --frozen-lockfile
+        
+      - name: Build frontend
+        working-directory: ./client
+        run: bun run build
+        env:
+          ESLINT_NO_DEV_ERRORS: true
+          TSC_COMPILE_ON_ERROR: true
+        
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-files
+          path: |
+            client/build/
+            package*.json
+            server/
+            migrations/
+            .env.example
+          retention-days: 30
+
+  # Job 6: Docker Build - COMMENTED OUT
+  # docker-build:
+  #   name: Docker Build & Push
+  #   runs-on: ubuntu-latest
+  #   needs: build
+  #   if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+  #   
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v4
+  #       
+  #     - name: Set up Docker Buildx
+  #       uses: docker/setup-buildx-action@v3
+  #       
+  #     - name: Login to Docker Hub
+  #       uses: docker/login-action@v3
+  #       with:
+  #         username: ${{ secrets.DOCKER_USERNAME }}
+  #         password: ${{ secrets.DOCKER_PASSWORD }}
+  #         
+  #     - name: Extract metadata
+  #       id: meta
+  #       uses: docker/metadata-action@v5
+  #       with:
+  #         images: ${{ secrets.DOCKER_USERNAME }}/students-enrollment
+  #         tags: |
+  #           type=ref,event=branch
+  #           type=ref,event=pr
+  #           type=sha,prefix={{branch}}-
+  #           type=raw,value=latest,enable={{is_default_branch}}
+  #           
+  #     - name: Build and push Docker image
+  #       uses: docker/build-push-action@v5
+  #       with:
+  #         context: .
+  #         push: true
+  #         tags: ${{ steps.meta.outputs.tags }}
+  #         labels: ${{ steps.meta.outputs.labels }}
+  #         cache-from: type=gha
+  #         cache-to: type=gha,mode=max
+
+  # Job 7: Deploy Backend to Render (Staging)
+  deploy-backend-staging:
+    name: Deploy Backend to Render (Staging)
+    runs-on: ubuntu-latest
+    needs: [test-backend, security]
+    if: github.ref == 'refs/heads/develop'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Deploy to Render Staging
+        uses: johnbeynon/render-deploy-action@v0.0.8
+        with:
+          service-id: ${{ secrets.RENDER_STAGING_SERVICE_ID }}
+          api-key: ${{ secrets.RENDER_STAGING_API_KEY }}
+          
+      - name: Wait for deployment
+        run: sleep 90
+        
+      - name: Run staging health check
+        run: |
+          curl -f ${{ secrets.RENDER_STAGING_URL }}/api/health || exit 1
+
+  # Job 8: Deploy Frontend to GitHub Pages (Staging)  
+  deploy-frontend-staging:
+    name: Deploy Frontend to GitHub Pages (Staging)
+    runs-on: ubuntu-latest
+    needs: [test-frontend, security]
+    if: github.ref == 'refs/heads/develop'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+          
+      - name: Install frontend dependencies
+        working-directory: ./client
+        run: |
+          bun install --frozen-lockfile
+        
+      - name: Build frontend for staging
+        working-directory: ./client
+        run: bun run build
+        env:
+          REACT_APP_API_URL: ${{ secrets.RENDER_STAGING_URL }}
+          REACT_APP_STRIPE_PUBLISHABLE_KEY: ${{ secrets.STRIPE_PUBLISHABLE_KEY_TEST }}
+          PUBLIC_URL: /staging
+          ESLINT_NO_DEV_ERRORS: true
+          TSC_COMPILE_ON_ERROR: true
+          
+      - name: Copy CNAME file for staging
+        run: cp CNAME ./client/build/CNAME
+      - name: Deploy to GitHub Pages (Staging)
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./client/build
+          publish_branch: gh-pages
+          destination_dir: staging
+
+  # Job 9: Deploy Backend to Render (Production)
+  deploy-backend-production:
+    name: Deploy Backend to Render (Production)
+    runs-on: ubuntu-latest
+    needs: [test-backend, security]
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Deploy to Render Production
+        uses: johnbeynon/render-deploy-action@v0.0.8
+        with:
+          service-id: ${{ secrets.RENDER_PRODUCTION_SERVICE_ID }}
+          api-key: ${{ secrets.RENDER_PRODUCTION_API_KEY }}
+          
+      - name: Wait for deployment
+        run: sleep 90
+        
+      - name: Run production health check
+        run: |
+          curl -f ${{ secrets.RENDER_PRODUCTION_URL }}/api/health || exit 1
+
+  # Job 10: Deploy Frontend to GitHub Pages (Production)
+  deploy-frontend-production:
+    name: Deploy Frontend to GitHub Pages (Production)
+    runs-on: ubuntu-latest
+    needs: [test-frontend, security]
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+          
+      - name: Install frontend dependencies
+        working-directory: ./client
+        run: bun install --frozen-lockfile
+        
+      - name: Build frontend for production
+        working-directory: ./client
+        run: bun run build
+        env:
+          REACT_APP_API_URL: ${{ secrets.RENDER_PRODUCTION_URL }}
+          REACT_APP_STRIPE_PUBLISHABLE_KEY: ${{ secrets.STRIPE_PUBLISHABLE_KEY_LIVE }}
+          PUBLIC_URL: /
+          ESLINT_NO_DEV_ERRORS: true
+          TSC_COMPILE_ON_ERROR: true
+          
+      - name: Copy CNAME file for production
+        run: cp CNAME ./client/build/CNAME
+      - name: Deploy to GitHub Pages (Production)
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./client/build
+          publish_branch: gh-pages
+
+  # Job 11: Notifications - COMMENTED OUT
+  # notify-success:
+  #   name: Notify Deployment Success
+  #   runs-on: ubuntu-latest
+  #   needs: [deploy-backend-staging, deploy-frontend-staging, deploy-backend-production, deploy-frontend-production]
+  #   if: always() && (needs.deploy-backend-staging.result == 'success' || needs.deploy-backend-production.result == 'success')
+  #   
+  #   steps:
+  #     - name: Notify deployment success
+  #       uses: 8398a7/action-slack@v3
+  #       with:
+  #         status: success
+  #         text: '🚀 Deployment successful!'
+  #       env:
+  #         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+  #       if: success()
+  #       
+  # notify-failure:
+  #   name: Notify Deployment Failure
+  #   runs-on: ubuntu-latest
+  #   needs: [deploy-backend-staging, deploy-frontend-staging, deploy-backend-production, deploy-frontend-production]
+  #   if: always() && (needs.deploy-backend-staging.result == 'failure' || needs.deploy-backend-production.result == 'failure' || needs.deploy-frontend-staging.result == 'failure' || needs.deploy-frontend-production.result == 'failure')
+  #   
+  #   steps:
+  #     - name: Notify deployment failure
+  #       uses: 8398a7/action-slack@v3
+  #       with:
+  #         status: failure
+  #         text: '❌ Deployment failed!'
+  #       env:
+  #         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+  #       if: failure() 

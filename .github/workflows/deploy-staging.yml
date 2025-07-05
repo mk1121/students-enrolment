@@ -1,0 +1,123 @@
+name: Deploy Staging (Develop Branch)
+
+on:
+  push:
+    branches: [ develop ]
+  pull_request:
+    branches: [ develop ]
+    types: [closed]
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '18.x'
+  BUN_VERSION: 'latest'
+  BACKEND_URL: 'https://students-enrollment-develop.onrender.com'
+  STRIPE_PK: 'pk_test_yourtestkeyfromstripe'
+
+jobs:
+  # Job 1: Deploy Frontend to GitHub Pages (Staging)
+  deploy-frontend-staging:
+    name: Deploy Frontend to GitHub Pages (Staging)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.merged == true)
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+          
+      - name: Install frontend dependencies
+        working-directory: ./client
+        run: bun install --frozen-lockfile
+        
+      - name: Build frontend for staging
+        working-directory: ./client
+        run: bun run build
+        env:
+          REACT_APP_API_URL: ${{ env.BACKEND_URL }}
+          REACT_APP_STRIPE_PUBLISHABLE_KEY: ${{ env.STRIPE_PK }}
+          REACT_APP_ENVIRONMENT: staging
+          PUBLIC_URL: /students-enrolment
+          
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./client/build
+          publish_branch: gh-pages
+          cname: # Optional: your custom domain
+          
+      - name: Frontend deployment success notification
+        run: |
+          echo "✅ Frontend deployed to GitHub Pages"
+          echo "🌐 URL: https://${{ github.repository_owner }}.github.io/students-enrolment"
+
+  # Job 2: Trigger Render Backend Deployment
+  deploy-backend-staging:
+    name: Trigger Render Backend Deployment
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Trigger Render Deploy Hook
+        run: |
+          curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK_DEVELOP }}" \
+            -H "Content-Type: application/json" \
+            -d '{"ref": "develop"}'
+            
+      - name: Wait for deployment
+        run: sleep 120
+        
+      - name: Health check backend
+        run: |
+          for i in {1..10}; do
+            if curl -f "${{ env.BACKEND_URL }}/api/health"; then
+              echo "✅ Backend health check passed"
+              exit 0
+            fi
+            echo "⏳ Waiting for backend to be ready... (attempt $i/10)"
+            sleep 30
+          done
+          echo "❌ Backend health check failed"
+          exit 1
+          
+      - name: Backend deployment success notification
+        run: |
+          echo "✅ Backend deployed to Render"
+          echo "🚀 URL: ${{ env.BACKEND_URL }}"
+
+  # Job 3: Integration test staging deployment
+  test-staging-integration:
+    name: Test Staging Integration
+    runs-on: ubuntu-latest
+    needs: [deploy-frontend-staging, deploy-backend-staging]
+    
+    steps:
+      - name: Test frontend-backend connectivity
+        run: |
+          echo "🧪 Testing staging integration..."
+          # Test frontend loads
+          FRONTEND_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "https://${{ github.repository_owner }}.github.io/students-enrolment")
+          if [ "$FRONTEND_STATUS" = "200" ]; then
+            echo "✅ Frontend is accessible"
+          else
+            echo "❌ Frontend not accessible (HTTP $FRONTEND_STATUS)"
+            exit 1
+          fi
+          # Test backend API
+          BACKEND_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${{ secrets.RENDER_BACKEND_URL }}/api/health")
+          if [ "$BACKEND_STATUS" = "200" ]; then
+            echo "✅ Backend API is accessible"
+          else
+            echo "❌ Backend API not accessible (HTTP $BACKEND_STATUS)"
+            exit 1
+          fi
+          echo "🎉 Staging deployment successful!"
+          echo "📱 Frontend: https://${{ github.repository_owner }}.github.io/students-enrolment"
+          echo "🔧 Backend: ${{ secrets.RENDER_BACKEND_URL }}"
