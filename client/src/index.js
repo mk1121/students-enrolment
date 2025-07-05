@@ -70,10 +70,26 @@ const theme = createTheme({
   },
 });
 
+const getBasename = () => {
+  // For GitHub Pages deployment, use the repository name as basename
+  if (process.env.NODE_ENV === 'production' && window.location.hostname.includes('github.io')) {
+    const pathname = window.location.pathname;
+    
+    // Check if we're in staging subdirectory
+    if (pathname.includes('/staging')) {
+      return '/students-enrolment/staging';
+    } else {
+      // Default to repository name for production
+      return '/students-enrolment';
+    }
+  }
+  return '';
+};
+
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
-    <BrowserRouter>
+    <BrowserRouter basename={getBasename()}>
       <ThemeProvider theme={theme}>
         <CssBaseline />
         <AuthProvider>
