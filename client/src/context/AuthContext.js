@@ -1,6 +1,10 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
+import config from '../config/api';
+
+// Set axios defaults
+axios.defaults.baseURL = config.API_BASE_URL;
 
 // Create context
 const AuthContext = createContext();
@@ -98,7 +102,7 @@ export const AuthProvider = ({ children }) => {
     }
 
     try {
-      const res = await axios.get('/api/auth/me');
+      const res = await axios.get('/auth/me');
       dispatch({
         type: AUTH_ACTIONS.USER_LOADED,
         payload: res.data.user
@@ -114,7 +118,7 @@ export const AuthProvider = ({ children }) => {
   // Register user
   const register = async (formData) => {
     try {
-      const res = await axios.post('/api/auth/register', formData);
+      const res = await axios.post('/auth/register', formData);
       dispatch({
         type: AUTH_ACTIONS.LOGIN_SUCCESS,
         payload: res.data
@@ -136,7 +140,7 @@ export const AuthProvider = ({ children }) => {
   // Login user
   const login = async (formData) => {
     try {
-      const res = await axios.post('/api/auth/login', formData);
+      const res = await axios.post('/auth/login', formData);
       dispatch({
         type: AUTH_ACTIONS.LOGIN_SUCCESS,
         payload: res.data
@@ -165,7 +169,7 @@ export const AuthProvider = ({ children }) => {
   // Update user profile
   const updateProfile = async (formData) => {
     try {
-      const res = await axios.put(`/api/users/${state.user._id}`, formData);
+      const res = await axios.put(`/users/${state.user._id}`, formData);
       dispatch({
         type: AUTH_ACTIONS.UPDATE_USER,
         payload: res.data.user
@@ -182,7 +186,7 @@ export const AuthProvider = ({ children }) => {
   // Change password
   const changePassword = async (formData) => {
     try {
-      await axios.put('/api/auth/change-password', formData);
+      await axios.put('/auth/change-password', formData);
       toast.success('Password changed successfully!');
       return { success: true };
     } catch (error) {
@@ -195,7 +199,7 @@ export const AuthProvider = ({ children }) => {
   // Forgot password
   const forgotPassword = async (email) => {
     try {
-      await axios.post('/api/auth/forgot-password', { email });
+      await axios.post('/auth/forgot-password', { email });
       toast.success('Password reset link sent to your email!');
       return { success: true };
     } catch (error) {
@@ -208,7 +212,7 @@ export const AuthProvider = ({ children }) => {
   // Reset password
   const resetPassword = async (token, password) => {
     try {
-      await axios.post('/api/auth/reset-password', { token, password });
+      await axios.post('/auth/reset-password', { token, password });
       toast.success('Password reset successfully!');
       return { success: true };
     } catch (error) {
@@ -221,7 +225,7 @@ export const AuthProvider = ({ children }) => {
   // Verify email
   const verifyEmail = async (token) => {
     try {
-      await axios.post('/api/auth/verify-email', { token });
+      await axios.post('/auth/verify-email', { token });
       toast.success('Email verified successfully!');
       return { success: true };
     } catch (error) {

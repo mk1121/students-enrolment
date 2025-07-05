@@ -275,6 +275,7 @@ router.post(
           await handleRefund(event.data.object);
           break;
         default:
+          // eslint-disable-next-line no-console
           console.log(`Unhandled event type: ${event.type}`);
       }
 
