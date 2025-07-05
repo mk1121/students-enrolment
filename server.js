@@ -104,7 +104,23 @@ mongoose
   .then(() => console.log('MongoDB Connected'))
   .catch(err => console.log('MongoDB Connection Error:', err));
 
-// Health check endpoint (must be before catch-all route)
+// Routes
+app.use('/api/auth', authRoutes);
+app.use('/api/courses', courseRoutes);
+app.use('/api/enrollments', enrollmentRoutes);
+app.use('/api/payments', paymentRoutes);
+app.use('/api/payments/sslcommerz', sslcommerzRoutes);
+app.use('/api/users', userRoutes);
+
+// Method not allowed handler for API routes
+app.all('/api/*', (req, res) => {
+  res.status(405).json({
+    message: `Method ${req.method} not allowed for ${req.path}`,
+    allowedMethods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+  });
+});
+
+// Health check endpoint
 app.get('/api/health', (req, res) => {
   const healthCheck = {
     status: 'healthy',
@@ -141,22 +157,6 @@ app.get('/api/metrics', (req, res) => {
   };
 
   res.status(200).json(metrics);
-});
-
-// Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/courses', courseRoutes);
-app.use('/api/enrollments', enrollmentRoutes);
-app.use('/api/payments', paymentRoutes);
-app.use('/api/payments/sslcommerz', sslcommerzRoutes);
-app.use('/api/users', userRoutes);
-
-// Method not allowed handler for API routes (must be after all specific routes)
-app.all('/api/*', (req, res) => {
-  res.status(405).json({
-    message: `Method ${req.method} not allowed for ${req.path}`,
-    allowedMethods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-  });
 });
 
 // Error handling middleware
