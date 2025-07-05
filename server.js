@@ -152,6 +152,7 @@ app.use('/api/payments/sslcommerz', sslcommerzRoutes);
 app.use('/api/users', userRoutes);
 
 // Method not allowed handler for API routes (must be after all specific routes)
+
 app.all('/api/*', (req, res) => {
   res.status(405).json({
     message: `Method ${req.method} not allowed for ${req.path}`,
