@@ -22,25 +22,25 @@ import {
   Star as StarIcon,
   ArrowForward as ArrowForwardIcon
 } from '@mui/icons-material';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import axios from 'axios';
+import config from '../config/api';
+
+// Set axios base URL
+axios.defaults.baseURL = config.API_BASE_URL;
 
 const Home = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const navigate = useNavigate();
   const [featuredCourses, setFeaturedCourses] = useState([]);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchFeaturedCourses = async () => {
       try {
-        const response = await axios.get('/api/courses/featured');
+        const response = await axios.get('/courses/featured');
         setFeaturedCourses(response.data.courses || []);
       } catch (error) {
         console.error('Error fetching featured courses:', error);
-      } finally {
-        setLoading(false);
       }
     };
 
