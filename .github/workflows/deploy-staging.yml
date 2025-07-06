@@ -11,8 +11,6 @@ on:
 env:
   NODE_VERSION: '18.x'
   BUN_VERSION: 'latest'
-  BACKEND_URL: 'https://students-enrollment-develop.onrender.com'
-  STRIPE_PK: 'pk_test_yourtestkeyfromstripe'
 
 jobs:
   # Job 1: Deploy Frontend to GitHub Pages (Staging)
@@ -36,12 +34,12 @@ jobs:
         
       - name: Build frontend for staging
         working-directory: ./client
-        run: bun run build
+        run: bun run build:staging
         env:
-          REACT_APP_API_URL: ${{ env.BACKEND_URL }}
-          REACT_APP_STRIPE_PUBLISHABLE_KEY: ${{ env.STRIPE_PK }}
+          REACT_APP_API_URL: ${{ secrets.RENDER_STAGING_URL }}/api
+          REACT_APP_STRIPE_PUBLISHABLE_KEY: ${{ secrets.STRIPE_PUBLISHABLE_KEY_STAGING }}
           REACT_APP_ENVIRONMENT: staging
-          PUBLIC_URL: /students-enrolment
+          PUBLIC_URL: /students-enrolment/staging
           
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
@@ -49,12 +47,13 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./client/build
           publish_branch: gh-pages
+          destination_dir: staging
           cname: # Optional: your custom domain
           
       - name: Frontend deployment success notification
         run: |
           echo "✅ Frontend deployed to GitHub Pages"
-          echo "🌐 URL: https://${{ github.repository_owner }}.github.io/students-enrolment"
+          echo "🌐 URL: https://${{ github.repository_owner }}.github.io/students-enrolment/staging"
 
   # Job 2: Trigger Render Backend Deployment
   deploy-backend-staging:
@@ -77,7 +76,7 @@ jobs:
       - name: Health check backend
         run: |
           for i in {1..10}; do
-            if curl -f "${{ env.BACKEND_URL }}/api/health"; then
+            if curl -f "${{ secrets.RENDER_STAGING_URL }}/api/health"; then
               echo "✅ Backend health check passed"
               exit 0
             fi
@@ -90,7 +89,7 @@ jobs:
       - name: Backend deployment success notification
         run: |
           echo "✅ Backend deployed to Render"
-          echo "🚀 URL: ${{ env.BACKEND_URL }}"
+          echo "🚀 URL: ${{ secrets.RENDER_STAGING_URL }}"
 
   # Job 3: Integration test staging deployment
   test-staging-integration:
@@ -103,7 +102,7 @@ jobs:
         run: |
           echo "🧪 Testing staging integration..."
           # Test frontend loads
-          FRONTEND_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "https://${{ github.repository_owner }}.github.io/students-enrolment")
+          FRONTEND_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "https://${{ github.repository_owner }}.github.io/students-enrolment/staging")
           if [ "$FRONTEND_STATUS" = "200" ]; then
             echo "✅ Frontend is accessible"
           else
@@ -111,7 +110,7 @@ jobs:
             exit 1
           fi
           # Test backend API
-          BACKEND_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${{ secrets.RENDER_BACKEND_URL }}/api/health")
+          BACKEND_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${{ secrets.RENDER_STAGING_URL }}/api/health")
           if [ "$BACKEND_STATUS" = "200" ]; then
             echo "✅ Backend API is accessible"
           else
@@ -119,5 +118,5 @@ jobs:
             exit 1
           fi
           echo "🎉 Staging deployment successful!"
-          echo "📱 Frontend: https://${{ github.repository_owner }}.github.io/students-enrolment"
-          echo "🔧 Backend: ${{ secrets.RENDER_BACKEND_URL }}"
+          echo "📱 Frontend: https://${{ github.repository_owner }}.github.io/students-enrolment/staging"
+          echo "🔧 Backend: ${{ secrets.RENDER_STAGING_URL }}"
