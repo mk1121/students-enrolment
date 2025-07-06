@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useReducer, useEffect } from 'react';
+import React, { createContext, useContext, useReducer, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import config from '../config/api';
@@ -96,7 +96,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   // Load user
-  const loadUser = async () => {
+  const loadUser = useCallback(async () => {
     if (localStorage.getItem('token')) {
       setAuthToken(localStorage.getItem('token'));
     }
@@ -113,7 +113,7 @@ export const AuthProvider = ({ children }) => {
         payload: error.response?.data?.message || 'Authentication failed'
       });
     }
-  };
+  }, []);
 
   // Register user
   const register = async (formData) => {
@@ -243,7 +243,7 @@ export const AuthProvider = ({ children }) => {
   // Load user on mount
   useEffect(() => {
     loadUser();
-  }, []);
+  }, [loadUser]);
 
   // Set auth token on state change
   useEffect(() => {

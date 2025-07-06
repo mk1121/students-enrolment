@@ -16,7 +16,7 @@ const ForgotPassword = () => {
   const { forgotPassword } = useAuth();
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState(''); // eslint-disable-line no-unused-vars
 
   const handleSubmit = async (e) => {
     e.preventDefault();

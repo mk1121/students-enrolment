@@ -29,9 +29,9 @@ jobs:
         
       - name: Build frontend for production
         working-directory: ./client
-        run: bun run build
+        run: bun run build:production
         env:
-          REACT_APP_API_URL: ${{ secrets.RENDER_PRODUCTION_URL }}
+          REACT_APP_API_URL: ${{ secrets.RENDER_PRODUCTION_URL }}/api
           REACT_APP_STRIPE_PUBLISHABLE_KEY: ${{ secrets.STRIPE_PUBLISHABLE_KEY_LIVE }}
           REACT_APP_ENVIRONMENT: production
           PUBLIC_URL: /students-enrolment
@@ -41,13 +41,13 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./client/build
-          publish_branch: gh-pages-production
-          destination_dir: production
+          publish_branch: gh-pages
+          destination_dir: .
           
       - name: Frontend production deployment success
         run: |
           echo "✅ Frontend deployed to GitHub Pages (Production)"
-          echo "🌐 URL: https://${{ github.repository_owner }}.github.io/students-enrolment/production"
+          echo "🌐 URL: https://${{ github.repository_owner }}.github.io/students-enrolment/"
 
   # Job 2: Trigger Render Backend Deployment (Production)
   deploy-backend-production:
@@ -97,7 +97,7 @@ jobs:
           echo "🧪 Testing production deployment..."
           
           # Test frontend
-          FRONTEND_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "https://${{ github.repository_owner }}.github.io/students-enrolment/production")
+          FRONTEND_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "https://${{ github.repository_owner }}.github.io/students-enrolment/")
           if [ "$FRONTEND_STATUS" = "200" ]; then
             echo "✅ Production frontend is accessible"
           else
@@ -115,7 +115,7 @@ jobs:
           fi
           
           echo "🎉 Production deployment successful!"
-          echo "📱 Frontend: https://${{ github.repository_owner }}.github.io/students-enrolment/production"
+          echo "📱 Frontend: https://${{ github.repository_owner }}.github.io/students-enrolment/"
           echo "🔧 Backend: ${{ secrets.RENDER_PRODUCTION_URL }}"
           
       - name: Send success notification

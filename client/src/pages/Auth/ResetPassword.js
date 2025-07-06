@@ -18,7 +18,7 @@ const ResetPassword = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState(''); // eslint-disable-line no-unused-vars
 
   const handleSubmit = async (e) => {
     e.preventDefault();
