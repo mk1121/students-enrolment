@@ -42,7 +42,8 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./client/build
           publish_branch: gh-pages
-          destination_dir: ./
+          keep_files: true
+          exclude_assets: '.github,staging/**'
           
       - name: Frontend production deployment success
         run: |

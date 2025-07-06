@@ -41,6 +41,35 @@ jobs:
           REACT_APP_ENVIRONMENT: staging
           PUBLIC_URL: /students-enrolment/staging
           
+      - name: Clean staging directory only
+        run: |
+          # Clone the gh-pages branch to clean only staging directory
+          git clone --single-branch --branch gh-pages https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git gh-pages-temp
+          cd gh-pages-temp
+          
+          # Remove only staging directory contents, keep everything else
+          if [ -d "staging" ]; then
+            rm -rf staging/*
+            echo "✅ Cleaned staging directory contents"
+          else
+            echo "ℹ️ No staging directory found to clean"
+          fi
+          
+          # Commit the cleanup if there are changes
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if [ -n "$(git status --porcelain)" ]; then
+            git add .
+            git commit -m "Clean staging directory before new deployment"
+            git push origin gh-pages
+            echo "✅ Pushed staging directory cleanup"
+          else
+            echo "ℹ️ No changes to commit"
+          fi
+          
+          cd ..
+          rm -rf gh-pages-temp
+          
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
@@ -48,7 +77,7 @@ jobs:
           publish_dir: ./client/build
           publish_branch: gh-pages
           destination_dir: staging
-          keep_files: false
+          keep_files: true
           
       - name: Frontend deployment success notification
         run: |
