@@ -143,7 +143,6 @@ app.get('/api/metrics', (req, res) => {
   res.status(200).json(metrics);
 });
 
-
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/courses', courseRoutes);
@@ -152,7 +151,6 @@ app.use('/api/payments', paymentRoutes);
 app.use('/api/payments/sslcommerz', sslcommerzRoutes);
 app.use('/api/users', userRoutes);
 
-
 // Method not allowed handler for API routes (must be after all specific routes)
 
 app.all('/api/*', (req, res) => {
@@ -160,8 +158,6 @@ app.all('/api/*', (req, res) => {
     message: `Method ${req.method} not allowed for ${req.path}`,
     allowedMethods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   });
-
-
 });
 
 // Error handling middleware
