@@ -8,12 +8,5 @@
   "bracketSpacing": true,
   "bracketSameLine": false,
   "arrowParens": "avoid",
-  "endOfLine": "lf",
-  "quoteProps": "as-needed",
-  "jsxSingleQuote": true,
-  "proseWrap": "preserve",
-  "htmlWhitespaceSensitivity": "css",
-  "insertPragma": false,
-  "requirePragma": false,
-  "embeddedLanguageFormatting": "auto"
-} 
+  "endOfLine": "lf"
+}
