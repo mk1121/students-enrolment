@@ -1,11 +1,13 @@
 {
   "files": {
-    "main.css": "/staging/static/css/main.0333844d.css",
-    "main.js": "/staging/static/js/main.9a0d0a7d.js",
-    "index.html": "/staging/index.html"
+    "main.css": "/students-enrolment/staging/static/css/main.26faccad.css",
+    "main.js": "/students-enrolment/staging/static/js/main.86ae629b.js",
+    "index.html": "/students-enrolment/staging/index.html",
+    "main.26faccad.css.map": "/students-enrolment/staging/static/css/main.26faccad.css.map",
+    "main.86ae629b.js.map": "/students-enrolment/staging/static/js/main.86ae629b.js.map"
   },
   "entrypoints": [
-    "static/css/main.0333844d.css",
-    "static/js/main.9a0d0a7d.js"
+    "static/css/main.26faccad.css",
+    "static/js/main.86ae629b.js"
   ]
 }
