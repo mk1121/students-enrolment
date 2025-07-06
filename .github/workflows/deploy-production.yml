@@ -29,9 +29,9 @@ jobs:
         
       - name: Build frontend for production
         working-directory: ./client
-        run: bun run build
+        run: bun run build:production
         env:
-          REACT_APP_API_URL: ${{ secrets.RENDER_PRODUCTION_URL }}
+          REACT_APP_API_URL: ${{ secrets.RENDER_PRODUCTION_URL }}/api
           REACT_APP_STRIPE_PUBLISHABLE_KEY: ${{ secrets.STRIPE_PUBLISHABLE_KEY_LIVE }}
           REACT_APP_ENVIRONMENT: production
           PUBLIC_URL: /students-enrolment
