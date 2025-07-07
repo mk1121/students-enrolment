@@ -21,7 +21,26 @@ const userRoutes = require('./server/routes/users');
 
 // Security middleware
 app.use(helmet());
-app.use(compression());
+
+// Compression middleware - disable Brotli for Render compatibility  
+app.use(compression({
+  filter: (req, res) => {
+    // Don't compress responses with this request header
+    if (req.headers['x-no-compression']) {
+      return false;
+    }
+    
+    // Remove Brotli from accepted encodings to prevent zlib.createBrotliCompress error
+    if (req.headers['accept-encoding']) {
+      req.headers['accept-encoding'] = req.headers['accept-encoding']
+        .replace(/,?\s*br\s*/g, '')
+        .replace(/^,+|,+$/g, ''); // Clean up leading/trailing commas
+    }
+    
+    // Use compression filter function
+    return compression.filter(req, res);
+  }
+}));
 
 // Rate limiting
 const limiter = rateLimit({
