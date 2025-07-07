@@ -18,7 +18,7 @@
     "test:backend": "jest --config jest.config.js",
     "test:quick": "jest --config jest.config.js --passWithNoTests --silent --detectOpenHandles",
     "test:coverage": "jest --config jest.config.js --coverage",
-    "test:frontend": "cd client && bun test",
+    "test:frontend": "cd client && npm test --watchAll=false",
     "test:all": "bun run test:backend && bun run test:frontend",
     "ci:test": "bun run lint && bun run format:check && bun run test:all",
     "ci:build": "bun run ci:test && bun run build",
