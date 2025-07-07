@@ -98,7 +98,13 @@ router.get(
 
       // Build search query
       if (search) {
-        filter.$text = { $search: search };
+        const searchRegex = { $regex: search, $options: 'i' };
+        filter.$or = [
+          { title: searchRegex },
+          { description: searchRegex },
+          { shortDescription: searchRegex },
+          { tags: searchRegex }, // Fixed: tags is an array, so direct regex works
+        ];
       }
 
       // Build sort object
@@ -137,8 +143,15 @@ router.get(
       });
     } catch (error) {
       console.error('Get courses error:', error);
+      console.error('Error details:', {
+        message: error.message,
+        stack: error.stack,
+        query: req.query,
+      });
       res.status(500).json({
         message: 'Server error while fetching courses',
+        error:
+          process.env.NODE_ENV === 'development' ? error.message : undefined,
       });
     }
   }

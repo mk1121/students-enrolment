@@ -25,6 +25,7 @@ import {
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import config from '../config/api';
+import { formatPrice } from '../utils/currency';
 
 // Set axios base URL
 axios.defaults.baseURL = config.API_BASE_URL;
@@ -264,7 +265,7 @@ const Home = () => {
                       </Typography>
                     </Box>
                     <Typography variant="h6" color="primary" fontWeight={600}>
-                      ${course.price}
+                      {formatPrice(course.price, course.currency || 'BDT')}
                     </Typography>
                   </CardContent>
                   <CardActions>
