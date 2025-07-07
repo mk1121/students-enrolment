@@ -63,10 +63,10 @@ module.exports = {
         category: 'Programming',
         level: 'Beginner',
         duration: 40,
-        price: 99.99,
-        originalPrice: 199.99,
+        price: 4999,
+        originalPrice: 9999,
         discount: 50,
-        currency: 'USD',
+        currency: 'BDT',
         thumbnail: 'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=400',
         images: [
           'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=800'
@@ -112,10 +112,10 @@ module.exports = {
         category: 'Programming',
         level: 'Advanced',
         duration: 25,
-        price: 149.99,
-        originalPrice: 199.99,
+        price: 7499,
+        originalPrice: 9999,
         discount: 25,
-        currency: 'USD',
+        currency: 'BDT',
         thumbnail: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=400',
         images: [
           'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800'

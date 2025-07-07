@@ -6,7 +6,7 @@
   "scripts": {
     "start": "bun server.js",
     "server": "bun --watch server.js",
-    "client": "cd client && bun start",
+    "client": "cd client && bun run start:dev",
     "dev": "concurrently \"bun run server\" \"bun run client\"",
     "install-client": "cd client && bun install",
     "build": "cd client && bun run build",
