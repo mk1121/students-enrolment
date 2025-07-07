@@ -73,9 +73,11 @@ export const getCurrencySymbol = (currency = 'BDT') => {
 };
 
 // Default export
-export default {
+const currencyUtils = {
   formatPrice,
   formatPriceInput,
   parsePrice,
   getCurrencySymbol,
 };
+
+export default currencyUtils;

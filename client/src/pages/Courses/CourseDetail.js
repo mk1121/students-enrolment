@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -17,7 +17,6 @@ import {
   ListItemText,
   Avatar,
   Rating,
-  Paper,
   Accordion,
   AccordionSummary,
   AccordionDetails,
@@ -35,7 +34,6 @@ import {
   Group,
   Language,
   CheckCircle,
-  Star,
   Person,
   ExpandMore,
   School,
@@ -53,7 +51,7 @@ import { formatPrice } from '../../utils/currency';
 const CourseDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated } = useAuth();
   
   const [course, setCourse] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -63,14 +61,23 @@ const CourseDetail = () => {
   const [isEnrolled, setIsEnrolled] = useState(false);
   const [similarCourses, setSimilarCourses] = useState([]);
 
-  useEffect(() => {
-    fetchCourseDetails();
-    if (isAuthenticated) {
-      checkEnrollmentStatus();
+  const fetchSimilarCourses = useCallback(async (category, excludeId) => {
+    try {
+      const response = await fetch(
+        `${config.API_BASE_URL}/courses?category=${category}&limit=4`
+      );
+      
+      if (response.ok) {
+        const data = await response.json();
+        const filtered = data.courses.filter(c => c._id !== excludeId);
+        setSimilarCourses(filtered.slice(0, 3));
+      }
+    } catch (err) {
+      console.log('Failed to fetch similar courses:', err);
     }
-  }, [id, isAuthenticated]);
+  }, []);
 
-  const fetchCourseDetails = async () => {
+  const fetchCourseDetails = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch(`${config.API_BASE_URL}/courses/${id}`, {
@@ -95,25 +102,9 @@ const CourseDetail = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id, isAuthenticated, fetchSimilarCourses]);
 
-  const fetchSimilarCourses = async (category, excludeId) => {
-    try {
-      const response = await fetch(
-        `${config.API_BASE_URL}/courses?category=${category}&limit=4`
-      );
-      
-      if (response.ok) {
-        const data = await response.json();
-        const filtered = data.courses.filter(c => c._id !== excludeId);
-        setSimilarCourses(filtered.slice(0, 3));
-      }
-    } catch (err) {
-      console.log('Failed to fetch similar courses:', err);
-    }
-  };
-
-  const checkEnrollmentStatus = async () => {
+  const checkEnrollmentStatus = useCallback(async () => {
     try {
       const response = await fetch(`${config.API_BASE_URL}/enrollments/my-enrollments`, {
         headers: {
@@ -131,7 +122,14 @@ const CourseDetail = () => {
     } catch (err) {
       console.log('Failed to check enrollment status:', err);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    fetchCourseDetails();
+    if (isAuthenticated) {
+      checkEnrollmentStatus();
+    }
+  }, [fetchCourseDetails, isAuthenticated, checkEnrollmentStatus]);
 
   const handleEnrollment = async () => {
     if (!isAuthenticated) {

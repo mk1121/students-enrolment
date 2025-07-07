@@ -21,20 +21,12 @@ import {
   Alert,
   Paper,
   Slider,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-  Checkbox,
-  FormControlLabel,
-  FormGroup,
 } from '@mui/material';
 import {
   Search,
   FilterList,
   Schedule,
   Group,
-  Star,
-  ExpandMore,
   Person,
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
@@ -104,23 +96,7 @@ const Courses = () => {
     { value: 'currentStudents-desc', label: 'Most Popular' },
   ];
 
-  useEffect(() => {
-    fetchCourses();
-  }, [debouncedSearchTerm, category, level, priceRange, sortBy, page]);
-
-  useEffect(() => {
-    // Update URL params
-    const params = new URLSearchParams();
-    if (debouncedSearchTerm) params.set('search', debouncedSearchTerm);
-    if (category) params.set('category', category);
-    if (level) params.set('level', level);
-    if (sortBy !== 'createdAt-desc') params.set('sortBy', sortBy);
-    if (page !== 1) params.set('page', page.toString());
-    
-    setSearchParams(params);
-  }, [debouncedSearchTerm, category, level, sortBy, page, setSearchParams]);
-
-  const fetchCourses = async () => {
+  const fetchCourses = useCallback(async () => {
     try {
       setLoading(true);
       setError('');
@@ -162,7 +138,23 @@ const Courses = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [debouncedSearchTerm, category, level, priceRange, sortBy, page, isAuthenticated]);
+
+  useEffect(() => {
+    fetchCourses();
+  }, [fetchCourses]);
+
+  useEffect(() => {
+    // Update URL params
+    const params = new URLSearchParams();
+    if (debouncedSearchTerm) params.set('search', debouncedSearchTerm);
+    if (category) params.set('category', category);
+    if (level) params.set('level', level);
+    if (sortBy !== 'createdAt-desc') params.set('sortBy', sortBy);
+    if (page !== 1) params.set('page', page.toString());
+    
+    setSearchParams(params);
+  }, [debouncedSearchTerm, category, level, sortBy, page, setSearchParams]);
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
