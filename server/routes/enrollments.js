@@ -102,6 +102,31 @@ router.get(
   }
 );
 
+// @route   GET /api/enrollments/my-enrollments
+// @desc    Get current user's enrollments
+// @access  Private (Student/Admin)
+router.get('/my-enrollments', [authenticateToken], async (req, res) => {
+  try {
+    const enrollments = await Enrollment.find({ student: req.user._id })
+      .populate(
+        'course',
+        'title description thumbnail price duration category level instructor'
+      )
+      .populate('payment', 'amount status paymentMethod')
+      .sort({ enrolledAt: -1 });
+
+    res.json({
+      enrollments,
+      count: enrollments.length,
+    });
+  } catch (error) {
+    console.error('Get my-enrollments error:', error);
+    res.status(500).json({
+      message: 'Server error while fetching your enrollments',
+    });
+  }
+});
+
 // @route   GET /api/enrollments/:id
 // @desc    Get enrollment by ID
 // @access  Private
