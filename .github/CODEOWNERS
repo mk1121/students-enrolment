@@ -1,0 +1,26 @@
+# Global owners for all files
+* @mk1121
+
+# Deployment and CI/CD files require strict review
+/.github/workflows/ @mk1121
+/docker-compose*.yml @mk1121
+/Dockerfile @mk1121
+/render.yaml @mk1121
+
+# Server configuration and security files
+/server.js @mk1121
+/server/middleware/auth.js @mk1121
+/server/routes/ @mk1121
+
+# Database migrations require careful review
+/migrations/ @mk1121
+
+# Package files and dependencies
+package.json @mk1121
+/client/package.json @mk1121
+bun.lock @mk1121
+/client/bun.lock @mk1121
+
+# Environment configuration
+env.example @mk1121
+/client/.env* @mk1121

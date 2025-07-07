@@ -1,0 +1,95 @@
+name: Enforce PR Rules
+
+on:
+  pull_request:
+    branches: [ main ]
+    types: [ opened, synchronize, reopened ]
+
+jobs:
+  enforce-pr-source:
+    name: Enforce PR Source Branch
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Check PR source branch
+        run: |
+          PR_SOURCE_BRANCH="${{ github.head_ref }}"
+          ALLOWED_BRANCHES="develop"
+          
+          echo "🔍 Checking PR source branch: $PR_SOURCE_BRANCH"
+          echo "✅ Allowed branches: $ALLOWED_BRANCHES"
+          
+          if [[ "$PR_SOURCE_BRANCH" != "develop" ]]; then
+            echo "❌ ERROR: Pull requests to main branch are only allowed from develop branch"
+            echo "📋 Current PR source: $PR_SOURCE_BRANCH"
+            echo "🚫 Please create your PR from develop branch instead"
+            echo ""
+            echo "How to fix this:"
+            echo "1. Merge your changes to develop branch first"
+            echo "2. Create a new PR from develop to main"
+            echo "3. Close this PR"
+            exit 1
+          fi
+          
+          echo "✅ PR source branch is valid: $PR_SOURCE_BRANCH"
+          echo "🎉 This PR follows the proper workflow: develop → main"
+
+  check-pr-title:
+    name: Check PR Title Format
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Validate PR title
+        run: |
+          PR_TITLE="${{ github.event.pull_request.title }}"
+          
+          echo "🔍 Checking PR title: $PR_TITLE"
+          
+          # Check if title starts with conventional commit type
+          if [[ "$PR_TITLE" =~ ^(feat|fix|docs|style|refactor|test|chore|ci|perf|build|revert)(\(.+\))?: ]]; then
+            echo "✅ PR title follows conventional commit format"
+          else
+            echo "⚠️  PR title should follow conventional commit format"
+            echo "📋 Examples:"
+            echo "   feat: add new dashboard functionality"
+            echo "   fix: resolve deployment workflow issues"
+            echo "   docs: update API documentation"
+            echo "   chore: update dependencies"
+            echo ""
+            echo "Current title: $PR_TITLE"
+            echo "Please consider updating the PR title to follow conventional commit format"
+          fi
+
+  deployment-readiness:
+    name: Check Deployment Readiness
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Check for deployment files
+        run: |
+          echo "🔍 Checking deployment configuration..."
+          
+          # Check if required workflow files exist
+          if [ ! -f ".github/workflows/deploy-production.yml" ]; then
+            echo "❌ Missing production deployment workflow"
+            exit 1
+          fi
+          
+          if [ ! -f ".github/workflows/deploy-staging.yml" ]; then
+            echo "❌ Missing staging deployment workflow"
+            exit 1
+          fi
+          
+          echo "✅ Deployment workflows are present"
+          
+          # Check if package.json has required scripts
+          if ! grep -q "build:production" client/package.json; then
+            echo "❌ Missing build:production script in client/package.json"
+            exit 1
+          fi
+          
+          echo "✅ Build scripts are configured"
+          echo "🚀 Repository is ready for production deployment"
