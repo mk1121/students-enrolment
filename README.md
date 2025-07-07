@@ -297,15 +297,41 @@ GMAIL_CLIENT_ID=your_gmail_client_id
 
 We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
 
+### 🌿 Branch Strategy
+
+This project follows a **Git Flow** strategy with branch protection rules:
+
+#### 📋 Branch Structure
+- **`main`** - Production-ready code, protected branch
+- **`develop`** - Integration branch for features, staging environment
+- **`feature/*`** - Feature development branches
+- **`fix/*`** - Bug fix branches
+- **`hotfix/*`** - Emergency fixes for production
+
+#### 🔒 Branch Protection Rules
+- **Direct pushes to `main` are prohibited**
+- **Only `develop` branch can create PRs to `main`**
+- **All PRs require at least 1 approving review**
+- **Status checks must pass before merging**
+- **Branch must be up-to-date before merging**
+
+#### 🚀 Workflow Process
+1. **Feature Development**: Create feature branches from `develop`
+2. **Integration**: Merge feature branches into `develop`
+3. **Testing**: `develop` branch triggers staging deployment
+4. **Production**: Create PR from `develop` to `main` for production deployment
+5. **Hotfixes**: Create hotfix branches from `main`, merge to both `main` and `develop`
+
 ### Development Workflow
 
 1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+2. Create a feature branch from `develop` (`git checkout -b feature/amazing-feature`)
 3. Make your changes
 4. Run tests (`bun run test:all`)
 5. Commit your changes (`git commit -m 'Add amazing feature'`)
 6. Push to the branch (`git push origin feature/amazing-feature`)
-7. Open a Pull Request
+7. Open a Pull Request to `develop` branch
+8. After review and merge to `develop`, create PR from `develop` to `main`
 
 ### Code Quality Standards
 
@@ -313,6 +339,7 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 - Write comprehensive tests for new features
 - Maintain test coverage above 80%
 - Follow conventional commit messages
+- Use semantic versioning for releases
 
 ## 📞 Support & Help
 
