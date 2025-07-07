@@ -73,19 +73,21 @@ app.use(
         // Development origins
         'http://localhost:3000',
         'http://localhost:3001',
-        
+
         // Production origins
         'https://mk1121.github.io', // GitHub Pages production
         'https://project-dev-std-enroll.maruf.com.bd', // Custom domain
-        
+
         // Environment-specific origins
         process.env.CLIENT_URL, // Production client URL from env
         process.env.FRONTEND_URL, // Alternative env var name
-        
+
         // Add any additional domains here
       ].filter(Boolean); // Remove any undefined/null values
 
-      console.log(`CORS Check - Origin: ${origin}, Environment: ${process.env.NODE_ENV}`);
+      console.log(
+        `CORS Check - Origin: ${origin}, Environment: ${process.env.NODE_ENV}`
+      );
 
       if (allowedOrigins.includes(origin)) {
         console.log(`✅ CORS: Origin ${origin} allowed`);
@@ -93,11 +95,15 @@ app.use(
       } else {
         // In development, be more permissive but log warnings
         if (process.env.NODE_ENV !== 'production') {
-          console.log(`⚠️ CORS: Origin ${origin} not in whitelist but allowing in ${process.env.NODE_ENV} mode`);
+          console.log(
+            `⚠️ CORS: Origin ${origin} not in whitelist but allowing in ${process.env.NODE_ENV} mode`
+          );
           callback(null, true);
         } else {
           console.log(`❌ CORS: Origin ${origin} blocked in production`);
-          callback(new Error(`CORS: Origin ${origin} not allowed in production`));
+          callback(
+            new Error(`CORS: Origin ${origin} not allowed in production`)
+          );
         }
       }
     },
@@ -110,7 +116,7 @@ app.use(
       'Accept',
       'Authorization',
       'Cache-Control',
-      'X-Access-Token'
+      'X-Access-Token',
     ],
     exposedHeaders: ['X-Total-Count'],
     maxAge: 86400, // 24 hours preflight cache
