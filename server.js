@@ -66,29 +66,54 @@ app.get('/', (req, res) => {
 app.use(
   cors({
     origin: function (origin, callback) {
-      // Allow requests with no origin (like mobile apps or Postman)
+      // Allow requests with no origin (like mobile apps, curl, Postman)
       if (!origin) return callback(null, true);
 
       const allowedOrigins = [
+        // Development origins
         'http://localhost:3000',
         'http://localhost:3001',
-        process.env.CLIENT_URL,
-        'https://project-dev-std-enroll.maruf.com.bd',
-        // Add your actual frontend domain here
+        
+        // Production origins
+        'https://mk1121.github.io', // GitHub Pages production
+        'https://project-dev-std-enroll.maruf.com.bd', // Custom domain
+        
+        // Environment-specific origins
+        process.env.CLIENT_URL, // Production client URL from env
+        process.env.FRONTEND_URL, // Alternative env var name
+        
+        // Add any additional domains here
       ].filter(Boolean); // Remove any undefined/null values
 
+      console.log(`CORS Check - Origin: ${origin}, Environment: ${process.env.NODE_ENV}`);
+
       if (allowedOrigins.includes(origin)) {
+        console.log(`✅ CORS: Origin ${origin} allowed`);
         callback(null, true);
       } else {
-        // In development, allow all origins
+        // In development, be more permissive but log warnings
         if (process.env.NODE_ENV !== 'production') {
+          console.log(`⚠️ CORS: Origin ${origin} not in whitelist but allowing in ${process.env.NODE_ENV} mode`);
           callback(null, true);
         } else {
-          callback(new Error('Not allowed by CORS'));
+          console.log(`❌ CORS: Origin ${origin} blocked in production`);
+          callback(new Error(`CORS: Origin ${origin} not allowed in production`));
         }
       }
     },
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: [
+      'Origin',
+      'X-Requested-With',
+      'Content-Type',
+      'Accept',
+      'Authorization',
+      'Cache-Control',
+      'X-Access-Token'
+    ],
+    exposedHeaders: ['X-Total-Count'],
+    maxAge: 86400, // 24 hours preflight cache
   })
 );
 
