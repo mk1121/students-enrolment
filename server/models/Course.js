@@ -65,8 +65,8 @@ const courseSchema = new mongoose.Schema(
     },
     currency: {
       type: String,
-      default: 'USD',
-      enum: ['USD', 'EUR', 'GBP', 'CAD', 'AUD'],
+      default: 'BDT',
+      enum: ['BDT', 'USD', 'EUR', 'GBP', 'CAD', 'AUD'],
     },
     thumbnail: {
       type: String,
