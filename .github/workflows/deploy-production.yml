@@ -70,33 +70,7 @@ jobs:
           
           cd ..
           rm -rf gh-pages-temp
-          
-      - name: Clean root directory only (preserve staging)
-        run: |
-          # Clone the gh-pages branch to clean only root files, preserve staging
-          git clone --single-branch --branch gh-pages https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git gh-pages-temp
-          cd gh-pages-temp
-          
-          # Remove only root files, keep staging directory and .github folder
-          find . -maxdepth 1 -type f -not -name ".gitignore" -not -name "README.md" -delete
-          find . -maxdepth 1 -type d -not -name "." -not -name ".git" -not -name "staging" -not -name ".github" -exec rm -rf {} + 2>/dev/null || true
-          echo "✅ Cleaned root directory contents (preserved staging directory)"
-          
-          # Commit the cleanup if there are changes
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          if [ -n "$(git status --porcelain)" ]; then
-            git add .
-            git commit -m "Clean root directory before production deployment (preserve staging)"
-            git push origin gh-pages
-            echo "✅ Pushed root directory cleanup"
-          else
-            echo "ℹ️ No changes to commit"
-          fi
-          
-          cd ..
-          rm -rf gh-pages-temp
-          
+
       - name: Deploy to GitHub Pages (Production)
         uses: peaceiris/actions-gh-pages@v3
         with:
