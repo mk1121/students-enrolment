@@ -12,7 +12,7 @@
 /server/middleware/auth.js @mk1121
 /server/routes/ @mk1121
 
-# Database migrations require careful reviews
+# Database migrations require careful review
 /migrations/ @mk1121
 
 # Package files and dependencies
