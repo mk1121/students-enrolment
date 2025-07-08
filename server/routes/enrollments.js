@@ -241,8 +241,11 @@ router.post(
       await enrollment.save();
 
       // Update course student count
-      course.currentStudents += 1;
-      await course.save();
+      await Course.findByIdAndUpdate(
+        courseId,
+        { $inc: { currentStudents: 1 } },
+        { new: true }
+      );
 
       // Populate the enrollment for response
       await enrollment.populate([

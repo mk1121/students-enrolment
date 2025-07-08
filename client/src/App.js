@@ -21,6 +21,8 @@ import AdminEnrollments from './pages/Admin/Enrollments';
 import AdminPayments from './pages/Admin/Payments';
 import ProtectedRoute from './components/Auth/ProtectedRoute';
 import AdminRoute from './components/Auth/AdminRoute';
+import { EnrollCourse, EnrollmentHistory, CourseProgress } from './pages/Enrollments';
+import { Checkout, PaymentSuccess, PaymentFailure } from './pages/Payment';
 
 function App() {
   const { loading, isAuthenticated } = useAuth();
@@ -72,6 +74,45 @@ function App() {
             <Profile />
           </ProtectedRoute>
         } />
+        
+        {/* Enrollment Routes */}
+        <Route path="courses/:courseId/enroll" element={
+          <ProtectedRoute>
+            <EnrollCourse />
+          </ProtectedRoute>
+        } />
+        <Route path="courses/:courseId/learn" element={
+          <ProtectedRoute>
+            <CourseProgress />
+          </ProtectedRoute>
+        } />
+        <Route path="enrollments" element={
+          <ProtectedRoute>
+            <EnrollmentHistory />
+          </ProtectedRoute>
+        } />
+        
+        {/* Payment Routes */}
+        <Route path="checkout/:enrollmentId" element={
+          <ProtectedRoute>
+            <Checkout />
+          </ProtectedRoute>
+        } />
+        <Route path="payment/success" element={
+          <ProtectedRoute>
+            <PaymentSuccess />
+          </ProtectedRoute>
+        } />
+        <Route path="payment/failure" element={
+          <ProtectedRoute>
+            <PaymentFailure />
+          </ProtectedRoute>
+        } />
+        <Route path="payment/pending" element={
+          <ProtectedRoute>
+            <PaymentSuccess />
+          </ProtectedRoute>
+        } />
       </Route>
 
       {/* Admin Routes */}
@@ -109,4 +150,4 @@ function App() {
   );
 }
 
-export default App; 
+export default App;
