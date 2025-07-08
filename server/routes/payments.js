@@ -854,7 +854,7 @@ async function processStripePayment(
         studentId: enrollment.student._id.toString(),
       },
       description: `Payment for ${enrollment.course.title}`,
-      receiptEmail: enrollment.student.email,
+      receipt_email: enrollment.student.email,
     });
 
     // For demo purposes, we'll simulate a successful payment
