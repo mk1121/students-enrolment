@@ -1,0 +1,13 @@
+{
+  "files": {
+    "main.css": "/students-enrolment/staging/static/css/main.26faccad.css",
+    "main.js": "/students-enrolment/staging/static/js/main.7e3886bb.js",
+    "index.html": "/students-enrolment/staging/index.html",
+    "main.26faccad.css.map": "/students-enrolment/staging/static/css/main.26faccad.css.map",
+    "main.7e3886bb.js.map": "/students-enrolment/staging/static/js/main.7e3886bb.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.26faccad.css",
+    "static/js/main.7e3886bb.js"
+  ]
+}
