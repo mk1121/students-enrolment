@@ -135,7 +135,7 @@ describe('Payment Routes - Stripe and SSLCommerz Integration', () => {
             courseTitle: testCourse.title
           },
           description: `Payment for ${testCourse.title} course`,
-          receiptEmail: testUser.email
+          receipt_email: testUser.email
         });
 
         // Verify payment record was created

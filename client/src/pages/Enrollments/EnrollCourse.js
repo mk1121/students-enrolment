@@ -32,7 +32,7 @@ import {
   CheckCircle,
   Language,
   Assignment,
-  Certificate,
+  WorkspacePremium,
   ShoppingCart,
   School,
   AccessTime,
@@ -44,29 +44,19 @@ import { useAuth } from '../../context/AuthContext';
 import { formatPrice } from '../../utils/currency';
 import { toast } from 'react-toastify';
 import axios from 'axios';
-import API_BASE_URL from '../../config/api';
+import { API_BASE_URL } from '../../config/api';
 
 const EnrollCourse = () => {
   const { courseId } = useParams();
   const navigate = useNavigate();
-  const { user, isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth();
   const [course, setCourse] = useState(null);
   const [loading, setLoading] = useState(true);
   const [enrolling, setEnrolling] = useState(false);
   const [enrollmentDialog, setEnrollmentDialog] = useState(false);
   const [isEnrolled, setIsEnrolled] = useState(false);
   const [enrollment, setEnrollment] = useState(null);
-  const [prerequisites, setPrerequisites] = useState([]);
   const [reviews, setReviews] = useState([]);
-
-  useEffect(() => {
-    if (courseId) {
-      fetchCourseDetails();
-      if (isAuthenticated) {
-        checkEnrollmentStatus();
-      }
-    }
-  }, [courseId, isAuthenticated, fetchCourseDetails, checkEnrollmentStatus]);
 
   const fetchCourseDetails = useCallback(async () => {
     try {
@@ -116,6 +106,15 @@ const EnrollCourse = () => {
     }
   }, [courseId]);
 
+  useEffect(() => {
+    if (courseId) {
+      fetchCourseDetails();
+      if (isAuthenticated) {
+        checkEnrollmentStatus();
+      }
+    }
+  }, [courseId, isAuthenticated, fetchCourseDetails, checkEnrollmentStatus]);
+
   const handleEnrollClick = () => {
     if (!isAuthenticated) {
       toast.info('Please login to enroll in courses');
@@ -133,9 +132,9 @@ const EnrollCourse = () => {
         paymentMethod: 'stripe', // Default payment method
       };
 
-      const response = await axios.post('/enrollments', enrollmentData);
+      const response = await axios.post(`${API_BASE_URL}/enrollments`, enrollmentData);
       
-      if (response.data.success) {
+      if (response.data.enrollment) {
         setIsEnrolled(true);
         setEnrollment(response.data.enrollment);
         setEnrollmentDialog(false);
@@ -145,13 +144,28 @@ const EnrollCourse = () => {
         if (course.price === 0) {
           navigate(`/courses/${courseId}/learn`);
         } else {
-          // Redirect to payment page
-          navigate(`/payment/${response.data.enrollment._id}`);
+          // Redirect to checkout page
+          navigate(`/checkout/${response.data.enrollment._id}`);
         }
       }
     } catch (error) {
-      const message = error.response?.data?.message || 'Failed to enroll in course';
-      toast.error(message);
+      console.error('Enrollment error:', error);
+      if (error.response?.status === 400) {
+        // Client error - show the specific message
+        const message = error.response.data.message || 'Invalid enrollment request';
+        toast.error(message);
+        
+        // If already enrolled, check enrollment status
+        if (error.response.data.message?.includes('already enrolled')) {
+          checkEnrollmentStatus();
+        }
+      } else if (error.response?.status >= 500) {
+        // Server error
+        toast.error('Server error occurred. Please try again later.');
+      } else {
+        // Network or other errors
+        toast.error('Failed to enroll in course. Please check your connection.');
+      }
     } finally {
       setEnrolling(false);
     }
@@ -204,6 +218,13 @@ const EnrollCourse = () => {
     );
   }
 
+  // Ensure course has proper structure to prevent rendering errors
+  const safeRating = course.rating || { average: 0, count: 0 };
+  const safeInstructor = course.instructor || {};
+  const safeModules = course.modules || [];
+  const safeObjectives = course.objectives || [];
+  const safePrerequisites = course.prerequisites || [];
+
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
       <Grid container spacing={4}>
@@ -252,18 +273,17 @@ const EnrollCourse = () => {
                   <Typography variant="subtitle1" color="text.secondary" paragraph>
                     {course.description}
                   </Typography>
-                  <Box display="flex" alignItems="center" gap={2} mb={2}>
-                    <Box display="flex" alignItems="center" gap={1}>
-                      <Avatar
-                        src={course.instructor?.profilePicture}
-                        sx={{ width: 32, height: 32 }}
-                      >
-                        {course.instructor?.firstName?.[0]}
-                      </Avatar>
-                      <Typography variant="body2">
-                        {course.instructor?.firstName} {course.instructor?.lastName}
-                      </Typography>
-                    </Box>
+                  <Box display="flex" alignItems="center" gap={2} mb={2}>                  <Box display="flex" alignItems="center" gap={1}>
+                    <Avatar
+                      src={safeInstructor.profilePicture}
+                      sx={{ width: 32, height: 32 }}
+                    >
+                      {safeInstructor.firstName?.[0]}
+                    </Avatar>
+                    <Typography variant="body2">
+                      {safeInstructor.firstName} {safeInstructor.lastName}
+                    </Typography>
+                  </Box>
                     <Chip
                       label={course.category}
                       color="primary"
@@ -281,7 +301,7 @@ const EnrollCourse = () => {
                     <Box display="flex" alignItems="center" gap={1}>
                       <Star color="warning" />
                       <Typography variant="body2">
-                        {course.rating || 4.5} ({course.reviewCount || 0} reviews)
+                        {safeRating.average || 4.5} ({safeRating.count || 0} reviews)
                       </Typography>
                     </Box>
                     <Box display="flex" alignItems="center" gap={1}>
@@ -310,15 +330,28 @@ const EnrollCourse = () => {
                         sx={{ mb: 2 }}
                       />
                       <Box>
-                        <Button
-                          variant="contained"
-                          size="large"
-                          startIcon={<PlayCircle />}
-                          onClick={handleViewCourse}
-                          fullWidth
-                        >
-                          Continue Learning
-                        </Button>
+                        {enrollment?.payment?.paymentStatus === 'pending' ? (
+                          <Button
+                            variant="contained"
+                            size="large"
+                            startIcon={<ShoppingCart />}
+                            onClick={() => navigate(`/checkout/${enrollment._id}`)}
+                            fullWidth
+                            sx={{ mb: 2 }}
+                          >
+                            Complete Payment
+                          </Button>
+                        ) : (
+                          <Button
+                            variant="contained"
+                            size="large"
+                            startIcon={<PlayCircle />}
+                            onClick={handleViewCourse}
+                            fullWidth
+                          >
+                            Continue Learning
+                          </Button>
+                        )}
                       </Box>
                     </Box>
                   ) : (
@@ -347,14 +380,15 @@ const EnrollCourse = () => {
                 What You'll Learn
               </Typography>
               <List>
-                {course.objectives?.map((objective, index) => (
+                {safeObjectives.map((objective, index) => (
                   <ListItem key={index} sx={{ pl: 0 }}>
                     <ListItemIcon>
                       <CheckCircle color="success" />
                     </ListItemIcon>
                     <ListItemText primary={objective} />
                   </ListItem>
-                )) || (
+                ))}
+                {safeObjectives.length === 0 && (
                   <ListItem sx={{ pl: 0 }}>
                     <ListItemIcon>
                       <CheckCircle color="success" />
@@ -374,7 +408,7 @@ const EnrollCourse = () => {
               </Typography>
               <Box display="flex" alignItems="center" gap={3} mb={2}>
                 <Typography variant="body2">
-                  {course.modules?.length || 5} modules
+                  {safeModules.length || 5} modules
                 </Typography>
                 <Typography variant="body2">
                   {course.lessonsCount || 25} lessons
@@ -384,7 +418,7 @@ const EnrollCourse = () => {
                 </Typography>
               </Box>
               <List>
-                {course.modules?.map((module, index) => (
+                {safeModules.map((module, index) => (
                   <ListItem key={index} sx={{ pl: 0 }}>
                     <ListItemIcon>
                       <Assignment />
@@ -394,7 +428,8 @@ const EnrollCourse = () => {
                       secondary={`${module.lessons?.length || 5} lessons • ${formatDuration(module.duration)}`}
                     />
                   </ListItem>
-                )) || (
+                ))}
+                {safeModules.length === 0 && (
                   // Default content if no modules defined
                   Array.from({ length: 5 }, (_, index) => (
                     <ListItem key={index} sx={{ pl: 0 }}>
@@ -419,10 +454,10 @@ const EnrollCourse = () => {
                 Student Reviews
               </Typography>
               <Box display="flex" alignItems="center" gap={2} mb={3}>
-                <Rating value={course.rating || 4.5} precision={0.1} readOnly />
-                <Typography variant="h6">{course.rating || 4.5}</Typography>
+                <Rating value={safeRating.average || 4.5} precision={0.1} readOnly />
+                <Typography variant="h6">{safeRating.average || 4.5}</Typography>
                 <Typography variant="body2" color="text.secondary">
-                  ({course.reviewCount || 0} reviews)
+                  ({safeRating.count || 0} reviews)
                 </Typography>
               </Box>
               {reviews.map((review) => (
@@ -477,7 +512,7 @@ const EnrollCourse = () => {
                 </ListItem>
                 <ListItem sx={{ pl: 0 }}>
                   <ListItemIcon>
-                    <Certificate />
+                    <WorkspacePremium />
                   </ListItemIcon>
                   <ListItemText
                     primary="Certificate"
@@ -498,14 +533,14 @@ const EnrollCourse = () => {
           </Card>
 
           {/* Prerequisites */}
-          {prerequisites.length > 0 && (
+          {safePrerequisites.length > 0 && (
             <Card sx={{ mb: 3 }}>
               <CardContent>
                 <Typography variant="h6" gutterBottom>
                   Prerequisites
                 </Typography>
                 <List>
-                  {prerequisites.map((prereq, index) => (
+                  {safePrerequisites.map((prereq, index) => (
                     <ListItem key={index} sx={{ pl: 0 }}>
                       <ListItemIcon>
                         <School />
@@ -526,14 +561,14 @@ const EnrollCourse = () => {
               </Typography>
               <Box display="flex" alignItems="center" gap={2} mb={2}>
                 <Avatar
-                  src={course.instructor?.profilePicture}
+                  src={safeInstructor.profilePicture}
                   sx={{ width: 60, height: 60 }}
                 >
-                  {course.instructor?.firstName?.[0]}
+                  {safeInstructor.firstName?.[0]}
                 </Avatar>
                 <Box>
                   <Typography variant="subtitle1">
-                    {course.instructor?.firstName} {course.instructor?.lastName}
+                    {safeInstructor.firstName} {safeInstructor.lastName}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
                     Course Instructor
@@ -541,7 +576,7 @@ const EnrollCourse = () => {
                 </Box>
               </Box>
               <Typography variant="body2">
-                {course.instructor?.bio || 'Experienced instructor with expertise in the field.'}
+                {safeInstructor.bio || 'Experienced instructor with expertise in the field.'}
               </Typography>
             </CardContent>
           </Card>

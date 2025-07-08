@@ -46,16 +46,15 @@ import {
   CheckCircle,
   ErrorOutline,
   AccessTime,
+  ShoppingCart,
 } from '@mui/icons-material';
-import { useAuth } from '../../context/AuthContext';
 import { formatPrice } from '../../utils/currency';
 import { toast } from 'react-toastify';
 import axios from 'axios';
-import API_BASE_URL from '../../config/api';
+import { API_BASE_URL } from '../../config/api';
 
 const EnrollmentHistory = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
   const [enrollments, setEnrollments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedTab, setSelectedTab] = useState(0);
@@ -77,10 +76,6 @@ const EnrollmentHistory = () => {
   const tabLabels = ['All', 'Active', 'Completed', 'Pending', 'Cancelled'];
   const statusMapping = ['all', 'active', 'completed', 'pending', 'cancelled'];
 
-  useEffect(() => {
-    fetchEnrollments();
-  }, [fetchEnrollments]);
-
   const fetchEnrollments = useCallback(async () => {
     try {
       setLoading(true);
@@ -93,13 +88,12 @@ const EnrollmentHistory = () => {
         ...(searchTerm && { search: searchTerm }),
       };
 
-      const response = await axios.get(`${API_BASE_URL}/enrollments`, { params });
+      const response = await axios.get(`${API_BASE_URL}/enrollments/my-enrollments`, { params });
       setEnrollments(response.data.enrollments);
-      setTotalPages(response.data.pagination.totalPages);
+      setTotalPages(response.data.pagination?.totalPages || 1);
       
-      // Calculate stats
-      const allEnrollmentsResponse = await axios.get(`${API_BASE_URL}/enrollments?limit=1000`);
-      const allEnrollments = allEnrollmentsResponse.data.enrollments;
+      // Calculate stats from the response
+      const allEnrollments = response.data.enrollments || [];
       
       setStats({
         total: allEnrollments.length,
@@ -114,7 +108,11 @@ const EnrollmentHistory = () => {
     } finally {
       setLoading(false);
     }
-  }, [selectedTab, searchTerm, statusFilter, page]);
+  }, [selectedTab, searchTerm, page]);
+
+  useEffect(() => {
+    fetchEnrollments();
+  }, [fetchEnrollments]);
 
   const handleTabChange = (event, newValue) => {
     setSelectedTab(newValue);
@@ -138,6 +136,13 @@ const EnrollmentHistory = () => {
     handleMenuClose();
   };
 
+  const handleGoToCheckout = () => {
+    if (selectedEnrollment) {
+      navigate(`/checkout/${selectedEnrollment._id}`);
+    }
+    handleMenuClose();
+  };
+
   const handleCancelEnrollment = () => {
     setCancelDialog(true);
     handleMenuClose();
@@ -145,7 +150,10 @@ const EnrollmentHistory = () => {
 
   const confirmCancelEnrollment = async () => {
     try {
-      await axios.put(`/enrollments/${selectedEnrollment._id}/cancel`);
+      await axios.put(`${API_BASE_URL}/enrollments/${selectedEnrollment._id}/status`, {
+        status: 'cancelled',
+        reason: 'User requested cancellation'
+      });
       toast.success('Enrollment cancelled successfully');
       fetchEnrollments();
       setCancelDialog(false);
@@ -455,11 +463,30 @@ const EnrollmentHistory = () => {
                         </Typography>
                       </TableCell>
                       <TableCell>
-                        <IconButton
-                          onClick={(e) => handleMenuClick(e, enrollment)}
-                        >
-                          <MoreVert />
-                        </IconButton>
+                        {enrollment.payment?.paymentStatus === 'pending' ? (
+                          <Box display="flex" gap={1}>
+                            <Button
+                              variant="contained"
+                              size="small"
+                              startIcon={<ShoppingCart />}
+                              onClick={() => navigate(`/checkout/${enrollment._id}`)}
+                            >
+                              Pay Now
+                            </Button>
+                            <IconButton
+                              onClick={(e) => handleMenuClick(e, enrollment)}
+                              size="small"
+                            >
+                              <MoreVert />
+                            </IconButton>
+                          </Box>
+                        ) : (
+                          <IconButton
+                            onClick={(e) => handleMenuClick(e, enrollment)}
+                          >
+                            <MoreVert />
+                          </IconButton>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -510,11 +537,23 @@ const EnrollmentHistory = () => {
                           </Typography>
                         </Box>
                       </Box>
-                      <IconButton
-                        onClick={(e) => handleMenuClick(e, enrollment)}
-                      >
-                        <MoreVert />
-                      </IconButton>
+                      <Box display="flex" alignItems="center" gap={1}>
+                        {enrollment.payment?.paymentStatus === 'pending' && (
+                          <Button
+                            variant="contained"
+                            size="small"
+                            startIcon={<ShoppingCart />}
+                            onClick={() => navigate(`/checkout/${enrollment._id}`)}
+                          >
+                            Pay Now
+                          </Button>
+                        )}
+                        <IconButton
+                          onClick={(e) => handleMenuClick(e, enrollment)}
+                        >
+                          <MoreVert />
+                        </IconButton>
+                      </Box>
                     </Box>
                     <Box display="flex" justifyContent="space-between" alignItems="center">
                       <Typography variant="body2" color="text.secondary">
@@ -554,6 +593,12 @@ const EnrollmentHistory = () => {
           <PlayCircle sx={{ mr: 1 }} />
           View Course
         </MenuItem>
+        {selectedEnrollment?.payment?.paymentStatus === 'pending' && (
+          <MenuItem onClick={handleGoToCheckout}>
+            <ShoppingCart sx={{ mr: 1 }} />
+            Complete Payment
+          </MenuItem>
+        )}
         {selectedEnrollment?.status === 'completed' && 
          selectedEnrollment?.certificate?.issued && (
           <MenuItem onClick={handleDownloadCertificate}>

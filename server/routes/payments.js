@@ -21,6 +21,18 @@ function getStripe() {
     const stripeMock = require('stripe');
     return stripeMock();
   }
+
+  // Validate Stripe secret key
+  if (!process.env.STRIPE_SECRET_KEY) {
+    throw new Error('STRIPE_SECRET_KEY is not configured');
+  }
+
+  if (!process.env.STRIPE_SECRET_KEY.startsWith('sk_')) {
+    throw new Error(
+      'STRIPE_SECRET_KEY appears to be invalid (should start with sk_)'
+    );
+  }
+
   return require('stripe')(process.env.STRIPE_SECRET_KEY);
 }
 
@@ -89,7 +101,8 @@ router.post(
           courseTitle: enrollment.course.title,
         },
         description: `Payment for ${enrollment.course.title} course`,
-        receiptEmail: enrollment.student.email,
+        // eslint-disable-next-line camelcase
+        receipt_email: enrollment.student.email,
       });
 
       // Create payment record
@@ -122,8 +135,54 @@ router.post(
       });
     } catch (error) {
       console.error('Create payment intent error:', error);
+      console.error('Error message:', error.message);
+      console.error('Error code:', error.code);
+      console.error('Error type:', error.type);
+      console.error(
+        'Stripe secret key exists:',
+        !!process.env.STRIPE_SECRET_KEY
+      );
+      console.error(
+        'Stripe secret key length:',
+        process.env.STRIPE_SECRET_KEY
+          ? process.env.STRIPE_SECRET_KEY.length
+          : 'undefined'
+      );
+
+      // More specific error responses
+      if (error.type === 'StripeCardError') {
+        return res.status(400).json({
+          message: 'Payment failed - card error',
+          error: error.message,
+        });
+      } else if (error.type === 'StripeInvalidRequestError') {
+        return res.status(400).json({
+          message: 'Invalid payment request',
+          error: error.message,
+        });
+      } else if (error.type === 'StripeAPIError') {
+        return res.status(500).json({
+          message: 'Payment service error',
+          error: 'Stripe API error',
+        });
+      } else if (error.type === 'StripeConnectionError') {
+        return res.status(500).json({
+          message: 'Payment service connection error',
+          error: 'Unable to connect to payment service',
+        });
+      } else if (error.type === 'StripeAuthenticationError') {
+        return res.status(500).json({
+          message: 'Payment service authentication error',
+          error: 'Invalid API key',
+        });
+      }
+
       res.status(500).json({
         message: 'Server error while creating payment intent',
+        error:
+          process.env.NODE_ENV === 'development'
+            ? error.message
+            : 'Internal server error',
       });
     }
   }
@@ -490,5 +549,433 @@ router.post(
     }
   }
 );
+
+// @route   POST /api/payments/process
+// @desc    Process payment with different payment methods
+// @access  Private
+router.post(
+  '/process',
+  [
+    authenticateToken,
+    body('enrollmentId')
+      .isMongoId()
+      .withMessage('Valid enrollment ID is required'),
+    body('paymentMethod')
+      .isIn(['stripe', 'sslcommerz', 'bank_transfer'])
+      .withMessage('Valid payment method is required'),
+    body('amount').isNumeric().withMessage('Valid amount is required'),
+    body('billingAddress')
+      .isObject()
+      .withMessage('Billing address is required'),
+  ],
+  async (req, res) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({
+          message: 'Validation failed',
+          errors: errors.array(),
+        });
+      }
+
+      const {
+        enrollmentId,
+        paymentMethod,
+        amount,
+        billingAddress,
+        cardDetails,
+      } = req.body;
+
+      // Get enrollment
+      const enrollment = await Enrollment.findById(enrollmentId)
+        .populate('course')
+        .populate('student');
+
+      if (!enrollment) {
+        return res.status(404).json({
+          message: 'Enrollment not found',
+        });
+      }
+
+      // Check if user owns this enrollment
+      if (enrollment.student._id.toString() !== req.user._id.toString()) {
+        return res.status(403).json({
+          message: 'Access denied. You can only pay for your own enrollments.',
+        });
+      }
+
+      if (enrollment.payment.paymentStatus === 'completed') {
+        return res.status(400).json({
+          message: 'Payment has already been completed for this enrollment',
+        });
+      }
+
+      let paymentResult;
+
+      switch (paymentMethod) {
+        case 'stripe':
+          paymentResult = await processStripePayment(
+            enrollment,
+            amount,
+            billingAddress,
+            cardDetails
+          );
+          break;
+        case 'sslcommerz':
+          paymentResult = await processSSLCommerzPayment(
+            enrollment,
+            amount,
+            billingAddress
+          );
+          break;
+        case 'bank_transfer':
+          paymentResult = await processBankTransferPayment(
+            enrollment,
+            amount,
+            billingAddress
+          );
+          break;
+        default:
+          return res.status(400).json({
+            message: 'Unsupported payment method',
+          });
+      }
+
+      // Create payment record
+      const payment = new Payment({
+        user: req.user._id,
+        enrollment: enrollmentId,
+        course: enrollment.course._id,
+        amount: amount,
+        currency: enrollment.payment.currency || 'BDT',
+        paymentMethod,
+        paymentGateway: paymentMethod,
+        transactionId: paymentResult.transactionId,
+        gatewayResponse: paymentResult.gatewayResponse,
+        status: paymentResult.status,
+        billingAddress,
+        metadata: {
+          courseTitle: enrollment.course.title,
+          studentEmail: enrollment.student.email,
+        },
+      });
+
+      await payment.save();
+
+      // Update enrollment payment status
+      enrollment.payment.paymentStatus = paymentResult.status;
+      enrollment.payment.transactionId = paymentResult.transactionId;
+      enrollment.payment.paymentDate = new Date();
+      enrollment.payment.paymentMethod = paymentMethod;
+
+      if (paymentResult.status === 'completed') {
+        enrollment.status = 'active';
+      }
+
+      await enrollment.save();
+
+      res.json({
+        success: true,
+        message:
+          paymentResult.status === 'completed'
+            ? 'Payment successful!'
+            : 'Payment initiated',
+        payment: payment,
+        paymentId: payment._id,
+        redirectUrl: paymentResult.redirectUrl,
+      });
+    } catch (error) {
+      console.error('Process payment error:', error);
+      res.status(500).json({
+        message: 'Server error while processing payment',
+      });
+    }
+  }
+);
+
+// @route   GET /api/payments/:paymentId
+// @desc    Get payment details
+// @access  Private
+router.get('/:paymentId', authenticateToken, async (req, res) => {
+  try {
+    const payment = await Payment.findById(req.params.paymentId)
+      .populate({
+        path: 'enrollment',
+        populate: {
+          path: 'course',
+          select: 'title thumbnail category level instructor',
+          populate: {
+            path: 'instructor',
+            select: 'firstName lastName email',
+          },
+        },
+      })
+      .populate('user', 'firstName lastName email');
+
+    if (!payment) {
+      return res.status(404).json({
+        message: 'Payment not found',
+      });
+    }
+
+    // Check if user owns this payment
+    if (payment.user._id.toString() !== req.user._id.toString()) {
+      return res.status(403).json({
+        message: 'Access denied. You can only view your own payments.',
+      });
+    }
+
+    res.json({
+      payment,
+      enrollment: payment.enrollment,
+    });
+  } catch (error) {
+    console.error('Get payment error:', error);
+    res.status(500).json({
+      message: 'Server error while fetching payment',
+    });
+  }
+});
+
+// @route   POST /api/payments/:paymentId/send-receipt
+// @desc    Send payment receipt via email
+// @access  Private
+router.post('/:paymentId/send-receipt', authenticateToken, async (req, res) => {
+  try {
+    const payment = await Payment.findById(req.params.paymentId)
+      .populate('enrollment')
+      .populate('user');
+
+    if (!payment) {
+      return res.status(404).json({
+        message: 'Payment not found',
+      });
+    }
+
+    // Check if user owns this payment
+    if (payment.user._id.toString() !== req.user._id.toString()) {
+      return res.status(403).json({
+        message: 'Access denied.',
+      });
+    }
+
+    // Send receipt email
+    await sendEmail(
+      payment.user.email,
+      'Payment Receipt',
+      emailTemplates.paymentReceipt({
+        user: payment.user,
+        payment: payment,
+        enrollment: payment.enrollment,
+      })
+    );
+
+    res.json({
+      message: 'Receipt sent successfully',
+    });
+  } catch (error) {
+    console.error('Send receipt error:', error);
+    res.status(500).json({
+      message: 'Server error while sending receipt',
+    });
+  }
+});
+
+// @route   GET /api/payments/:paymentId/receipt
+// @desc    Download payment receipt PDF
+// @access  Private
+router.get('/:paymentId/receipt', authenticateToken, async (req, res) => {
+  try {
+    const payment = await Payment.findById(req.params.paymentId)
+      .populate('enrollment')
+      .populate('user');
+
+    if (!payment) {
+      return res.status(404).json({
+        message: 'Payment not found',
+      });
+    }
+
+    // Check if user owns this payment
+    if (payment.user._id.toString() !== req.user._id.toString()) {
+      return res.status(403).json({
+        message: 'Access denied.',
+      });
+    }
+
+    // Generate PDF receipt (this would need a PDF generation library)
+    // For now, return a simple text receipt
+    const receiptText = `
+      PAYMENT RECEIPT
+      
+      Transaction ID: ${payment.transactionId}
+      Date: ${payment.createdAt.toLocaleDateString()}
+      Amount: ${payment.amount} ${payment.currency}
+      Payment Method: ${payment.paymentMethod}
+      Status: ${payment.status}
+      
+      Course: ${payment.enrollment.course.title}
+      Student: ${payment.user.firstName} ${payment.user.lastName}
+      
+      Thank you for your payment!
+    `;
+
+    res.setHeader('Content-Type', 'text/plain');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="receipt-${payment._id}.txt"`
+    );
+    res.send(receiptText);
+  } catch (error) {
+    console.error('Download receipt error:', error);
+    res.status(500).json({
+      message: 'Server error while downloading receipt',
+    });
+  }
+});
+
+// Helper functions for different payment methods
+async function processStripePayment(
+  enrollment,
+  amount,
+  _billingAddress,
+  _cardDetails
+) {
+  const stripe = getStripe();
+
+  try {
+    // Create payment intent
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: Math.round(amount * 100), // Convert to cents
+      currency: enrollment.payment.currency.toLowerCase(),
+      metadata: {
+        enrollmentId: enrollment._id.toString(),
+        courseId: enrollment.course._id.toString(),
+        studentId: enrollment.student._id.toString(),
+      },
+      description: `Payment for ${enrollment.course.title}`,
+      receiptEmail: enrollment.student.email,
+    });
+
+    // For demo purposes, we'll simulate a successful payment
+    // In production, you'd confirm the payment with the actual card details
+    return {
+      status: 'completed',
+      transactionId: paymentIntent.id,
+      gatewayResponse: paymentIntent,
+    };
+  } catch (error) {
+    console.error('Stripe payment error:', error);
+    throw new Error('Stripe payment failed');
+  }
+}
+
+async function processSSLCommerzPayment(enrollment, amount, billingAddress) {
+  // Initialize SSLCommerz
+  const SSLCommerzPayment = require('sslcommerz-lts');
+
+  // eslint-disable-next-line camelcase
+  const data = {
+    // eslint-disable-next-line camelcase
+    total_amount: amount,
+    currency: enrollment.payment.currency || 'BDT',
+    // eslint-disable-next-line camelcase
+    tran_id: `TXN_${Date.now()}`, // Unique transaction ID
+    // eslint-disable-next-line camelcase
+    success_url: `${process.env.CLIENT_URL}/payment/success`,
+    // eslint-disable-next-line camelcase
+    fail_url: `${process.env.CLIENT_URL}/payment/failure`,
+    // eslint-disable-next-line camelcase
+    cancel_url: `${process.env.CLIENT_URL}/payment/cancel`,
+    // eslint-disable-next-line camelcase
+    ipn_url: `${process.env.SERVER_URL}/api/payments/ipn`,
+    // eslint-disable-next-line camelcase
+    shipping_method: 'NO',
+    // eslint-disable-next-line camelcase
+    product_name: enrollment.course.title,
+    // eslint-disable-next-line camelcase
+    product_category: 'Education',
+    // eslint-disable-next-line camelcase
+    product_profile: 'digital-goods',
+    // eslint-disable-next-line camelcase
+    cus_name: enrollment.student.firstName + ' ' + enrollment.student.lastName,
+    // eslint-disable-next-line camelcase
+    // eslint-disable-next-line camelcase
+    cus_email: enrollment.student.email,
+    // eslint-disable-next-line camelcase
+    cus_add1: billingAddress.street,
+    // eslint-disable-next-line camelcase
+    cus_city: billingAddress.city,
+    // eslint-disable-next-line camelcase
+    cus_state: billingAddress.state,
+    // eslint-disable-next-line camelcase
+    cus_postcode: billingAddress.zipCode,
+    // eslint-disable-next-line camelcase
+    cus_country: billingAddress.country,
+    // eslint-disable-next-line camelcase
+    cus_phone: enrollment.student.phone || '01700000000',
+    // eslint-disable-next-line camelcase
+    // eslint-disable-next-line camelcase
+    cus_fax: enrollment.student.phone || '01700000000',
+    // eslint-disable-next-line camelcase
+    ship_name: enrollment.student.firstName + ' ' + enrollment.student.lastName,
+    // eslint-disable-next-line camelcase
+    ship_add1: billingAddress.street,
+    // eslint-disable-next-line camelcase
+    ship_city: billingAddress.city,
+    // eslint-disable-next-line camelcase
+    ship_state: billingAddress.state,
+    // eslint-disable-next-line camelcase
+    ship_postcode: billingAddress.zipCode,
+    // eslint-disable-next-line camelcase
+    ship_country: billingAddress.country,
+  };
+
+  try {
+    const sslcz = new SSLCommerzPayment(
+      process.env.SSLCOMMERZ_STORE_ID,
+      process.env.SSLCOMMERZ_STORE_PASSWORD,
+      process.env.NODE_ENV === 'production'
+    );
+
+    const response = await sslcz.init(data);
+
+    if (response.status === 'SUCCESS') {
+      return {
+        status: 'pending',
+        transactionId: data.tran_id,
+        gatewayResponse: response,
+        redirectUrl: response.redirectGatewayURL,
+      };
+    }
+    throw new Error('SSLCommerz initialization failed');
+  } catch (error) {
+    console.error('SSLCommerz payment error:', error);
+    throw new Error('SSLCommerz payment failed');
+  }
+}
+
+async function processBankTransferPayment(
+  _enrollment,
+  _amount,
+  _billingAddress
+) {
+  // For bank transfer, we'll create a pending payment
+  // The admin would need to manually verify and confirm the payment
+  return {
+    status: 'pending',
+    transactionId: `BANK_${Date.now()}`,
+    gatewayResponse: {
+      message:
+        'Bank transfer payment initiated. Please complete the transfer and notify us.',
+      bankDetails: {
+        accountName: process.env.BANK_ACCOUNT_NAME || 'Your Company Name',
+        accountNumber: process.env.BANK_ACCOUNT_NUMBER || '1234567890',
+        routingNumber: process.env.BANK_ROUTING_NUMBER || '123456789',
+        bankName: process.env.BANK_NAME || 'Your Bank Name',
+      },
+    },
+  };
+}
 
 module.exports = router;
