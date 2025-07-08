@@ -62,16 +62,21 @@ const PaymentSuccess = () => {
   };
 
   const handleDownloadReceipt = async () => {
+    if (!enrollment || !enrollment.payment || !enrollment.payment._id) {
+      toast.error('Payment information is missing.');
+      return;
+    }
+    const paymentId = enrollment.payment._id;
     try {
       const response = await axios.get(
-        `${API_BASE_URL}/payments/${enrollmentId}/receipt`,
+        `${API_BASE_URL}/payments/${paymentId}/receipt`,
         { responseType: 'blob' }
       );
       
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `receipt-${enrollmentId}.pdf`);
+      link.setAttribute('download', `receipt-${paymentId}.pdf`);
       document.body.appendChild(link);
       link.click();
       link.remove();
