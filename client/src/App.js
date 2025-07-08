@@ -22,7 +22,7 @@ import AdminPayments from './pages/Admin/Payments';
 import ProtectedRoute from './components/Auth/ProtectedRoute';
 import AdminRoute from './components/Auth/AdminRoute';
 import { EnrollCourse, EnrollmentHistory, CourseProgress } from './pages/Enrollments';
-import { Checkout, PaymentSuccess, PaymentFailure } from './pages/Payment';
+import { Checkout, PaymentSuccess, PaymentFailure, PaymentPending } from './pages/Payment';
 
 function App() {
   const { loading, isAuthenticated } = useAuth();
@@ -110,7 +110,7 @@ function App() {
         } />
         <Route path="payment/pending" element={
           <ProtectedRoute>
-            <PaymentSuccess />
+            <PaymentPending />
           </ProtectedRoute>
         } />
       </Route>
