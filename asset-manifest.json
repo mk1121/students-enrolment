@@ -1,0 +1,11 @@
+{
+  "files": {
+    "main.css": "/students-enrolment/static/css/main.0333844d.css",
+    "main.js": "/students-enrolment/static/js/main.eeef144c.js",
+    "index.html": "/students-enrolment/index.html"
+  },
+  "entrypoints": [
+    "static/css/main.0333844d.css",
+    "static/js/main.eeef144c.js"
+  ]
+}
