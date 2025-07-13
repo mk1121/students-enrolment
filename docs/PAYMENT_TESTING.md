@@ -7,7 +7,6 @@ This document provides comprehensive testing strategies and test cases for both 
 The payment system supports multiple payment gateways:
 - **Stripe**: International credit/debit card payments
 - **SSLCommerz**: Bangladesh-focused payment gateway
-- **PayPal**: Alternative international payment method (future)
 
 ## Test Environment Setup
 

@@ -47,6 +47,7 @@ import {
   ErrorOutline,
   AccessTime,
   ShoppingCart,
+  Receipt,
 } from '@mui/icons-material';
 import { formatPrice } from '../../utils/currency';
 import { toast } from 'react-toastify';
@@ -80,46 +81,141 @@ const EnrollmentHistory = () => {
     try {
       setLoading(true);
       const statusMapping = ['all', 'active', 'completed', 'pending', 'cancelled'];
-      const status = statusMapping[selectedTab];
+      
+      // Determine which status to use - prioritize statusFilter over tab selection
+      let effectiveStatus = statusFilter;
+      if (statusFilter === 'all') {
+        effectiveStatus = statusMapping[selectedTab];
+      }
+      
       const params = {
         page,
         limit: 10,
-        ...(status !== 'all' && { status }),
-        ...(searchTerm && { search: searchTerm }),
+        ...(effectiveStatus !== 'all' && { status: effectiveStatus }),
+        ...(searchTerm && searchTerm.trim() && { search: searchTerm.trim() }),
+        sortBy: 'enrollmentDate',
+        sortOrder: 'desc'
       };
 
-      const response = await axios.get(`${API_BASE_URL}/enrollments/my-enrollments`, { params });
-      setEnrollments(response.data.enrollments);
+      const token = localStorage.getItem('token');
+      const config = {
+        params,
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      };
+
+      const response = await axios.get(`${API_BASE_URL}/enrollments/my-enrollments`, config);
+      console.log('Enrollments API response:', response.data);
+      console.log('First enrollment structure:', response.data.enrollments?.[0]);
+      
+      setEnrollments(response.data.enrollments || []);
       setTotalPages(response.data.pagination?.totalPages || 1);
       
-      // Calculate stats from the response
-      const allEnrollments = response.data.enrollments || [];
-      
-      setStats({
-        total: allEnrollments.length,
-        active: allEnrollments.filter(e => e.status === 'active').length,
-        completed: allEnrollments.filter(e => e.status === 'completed').length,
-        pending: allEnrollments.filter(e => e.status === 'pending').length,
-        cancelled: allEnrollments.filter(e => e.status === 'cancelled').length,
-      });
+      // Use stats from backend response
+      if (response.data.stats) {
+        setStats(response.data.stats);
+      } else {
+        // Fallback stats calculation if backend doesn't provide them
+        const allEnrollments = response.data.enrollments || [];
+        setStats({
+          total: allEnrollments.length,
+          active: allEnrollments.filter(e => e.status === 'active').length,
+          completed: allEnrollments.filter(e => e.status === 'completed').length,
+          pending: allEnrollments.filter(e => e.status === 'pending').length,
+          cancelled: allEnrollments.filter(e => e.status === 'cancelled').length,
+        });
+      }
     } catch (error) {
       toast.error('Failed to fetch enrollments');
       console.error('Error fetching enrollments:', error);
     } finally {
       setLoading(false);
     }
-  }, [selectedTab, searchTerm, page]);
+  }, [selectedTab, searchTerm, statusFilter, page]);
 
   useEffect(() => {
+    // Initial load
     fetchEnrollments();
-  }, [fetchEnrollments]);
+  }, [fetchEnrollments, selectedTab, statusFilter]); // Only trigger on tab or status filter change
+
+  // Debounced search effect
+  useEffect(() => {
+    if (searchTerm === '') {
+      // If search is cleared, fetch immediately
+      fetchEnrollments();
+      return;
+    }
+
+    const timeoutId = setTimeout(() => {
+      setPage(1); // Reset to first page when searching
+      fetchEnrollments();
+    }, 500); // 500ms debounce
+
+    return () => clearTimeout(timeoutId);
+  }, [fetchEnrollments, searchTerm]); // Only depend on searchTerm
+
+  // Page change effect
+  useEffect(() => {
+    if (page > 1) { // Only fetch if not on first page (first page is handled by other effects)
+      fetchEnrollments();
+    }
+  }, [fetchEnrollments, page]);
+
+  // Test backend connection on component mount
+  useEffect(() => {
+    const testConnection = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const config = {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        };
+        await axios.get(`${API_BASE_URL}/enrollments/my-enrollments`, config);
+        console.log('✅ Backend connection successful');
+      } catch (error) {
+        console.error('❌ Backend connection failed:', error.message);
+        if (error.code === 'ERR_NETWORK' || !error.response) {
+          toast.error('Cannot connect to server. Please ensure the backend is running at http://localhost:5001');
+        }
+      }
+    };
+    
+    testConnection();
+  }, []);
 
   const handleTabChange = (event, newValue) => {
     setSelectedTab(newValue);
     setPage(1);
+    // Reset status filter when tab changes
+    setStatusFilter('all');
+  };
+
+  const handleStatusFilterChange = (event) => {
+    setStatusFilter(event.target.value);
+    setPage(1);
+    // Don't change tab when status filter changes
+  };
+
+  const handleSearchChange = (event) => {
+    setSearchTerm(event.target.value);
+    setPage(1); // Reset to first page when searching
+  };
+
+  const handleClearFilters = () => {
+    setSearchTerm('');
+    setStatusFilter('all');
+    setSelectedTab(0);
+    setPage(1);
   };
 
   const handleMenuClick = (event, enrollment) => {
+    console.log('Menu clicked for enrollment:', enrollment);
+    console.log('Enrollment ID:', enrollment?._id);
+    console.log('Course title:', enrollment?.course?.title);
     setAnchorEl(event.currentTarget);
     setSelectedEnrollment(enrollment);
   };
@@ -143,30 +239,132 @@ const EnrollmentHistory = () => {
     handleMenuClose();
   };
 
+  const handleViewReceipt = () => {
+    if (selectedEnrollment) {
+      // Navigate to receipt page using enrollment ID
+      navigate(`/payment/receipt/enrollment/${selectedEnrollment._id}`);
+    }
+    handleMenuClose();
+  };
+
   const handleCancelEnrollment = () => {
     setCancelDialog(true);
-    handleMenuClose();
+    // Don't close menu here - keep selectedEnrollment available for the confirmation
   };
 
   const confirmCancelEnrollment = async () => {
     try {
-      await axios.put(`${API_BASE_URL}/enrollments/${selectedEnrollment._id}/status`, {
+      // Safety check: ensure selectedEnrollment exists
+      if (!selectedEnrollment || !selectedEnrollment._id) {
+        console.error('No enrollment selected or missing enrollment ID');
+        console.error('selectedEnrollment:', selectedEnrollment);
+        toast.error('No enrollment selected. Please try again.');
+        setCancelDialog(false);
+        handleMenuClose();
+        return;
+      }
+      
+      // Validate enrollment ID format (MongoDB ObjectId is 24 hex characters)
+      const enrollmentId = selectedEnrollment._id;
+      if (!/^[0-9a-fA-F]{24}$/.test(enrollmentId)) {
+        console.error('Invalid enrollment ID format:', enrollmentId);
+        toast.error('Invalid enrollment ID. Please refresh the page and try again.');
+        setCancelDialog(false);
+        handleMenuClose();
+        return;
+      }
+
+      console.log('Cancelling enrollment:', enrollmentId);
+      console.log('Enrollment object:', selectedEnrollment);
+      console.log('Making request to:', `${API_BASE_URL}/enrollments/${enrollmentId}/status`);
+      
+      const token = localStorage.getItem('token');
+      console.log('Auth token exists:', !!token);
+      console.log('Full API_BASE_URL:', API_BASE_URL);
+      
+      if (!token) {
+        toast.error('Authentication required. Please log in again.');
+        return;
+      }
+      
+      // Create axios config with auth header
+      const config = {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      };
+      
+      // Test if we can reach the API with auth
+      try {
+        const testResponse = await axios.get(`${API_BASE_URL}/enrollments/my-enrollments`, config);
+        console.log('API connection test successful, got', testResponse.data?.enrollments?.length || 0, 'enrollments');
+      } catch (testError) {
+        console.error('API connection test failed:', testError.message);
+        if (testError.response?.status === 401) {
+          toast.error('Authentication failed. Please log in again.');
+        } else {
+          toast.error('Cannot connect to server. Please check if the backend is running.');
+        }
+        return;
+      }
+      
+      const requestBody = {
         status: 'cancelled',
         reason: 'User requested cancellation'
-      });
+      };
+      
+      console.log('Request body:', requestBody);
+      console.log('Request config:', config);
+      
+      const response = await axios.put(`${API_BASE_URL}/enrollments/${enrollmentId}/status`, requestBody, config);
+      
+      console.log('Cancel response:', response.data);
       toast.success('Enrollment cancelled successfully');
       fetchEnrollments();
       setCancelDialog(false);
+      handleMenuClose(); // Close menu after successful cancellation
     } catch (error) {
-      toast.error('Failed to cancel enrollment');
+      console.error('Error cancelling enrollment:', error);
+      console.error('Error response:', error.response?.data);
+      console.error('Error status:', error.response?.status);
+      console.error('Error code:', error.code);
+      
+      let errorMessage;
+      if (error.code === 'NETWORK_ERROR' || error.code === 'ERR_NETWORK') {
+        errorMessage = 'Network error: Cannot reach the server. Please check if the backend is running on http://localhost:5001';
+      } else if (error.response?.status === 404) {
+        errorMessage = 'API endpoint not found. Please check the server configuration.';
+      } else if (error.response?.status === 401) {
+        errorMessage = 'Authentication failed. Please log in again.';
+      } else if (error.response?.status === 403) {
+        errorMessage = 'Access denied. You can only cancel your own enrollments.';
+      } else {
+        errorMessage = error.response?.data?.message || 
+                      error.response?.data?.error ||
+                      `Failed to cancel enrollment (${error.response?.status || error.message || 'Network Error'})`;
+      }
+      
+      toast.error(errorMessage);
+      setCancelDialog(false);
+      handleMenuClose(); // Close menu after error
     }
   };
 
   const handleDownloadCertificate = async () => {
     try {
+      const token = localStorage.getItem('token');
+      const config = {
+        responseType: 'blob',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      };
+      
       const response = await axios.get(
         `${API_BASE_URL}/enrollments/${selectedEnrollment._id}/certificate`,
-        { responseType: 'blob' }
+        config
       );
       
       const url = window.URL.createObjectURL(new Blob([response.data]));
@@ -315,7 +513,7 @@ const EnrollmentHistory = () => {
                 fullWidth
                 placeholder="Search courses..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={handleSearchChange}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
@@ -331,7 +529,7 @@ const EnrollmentHistory = () => {
                 <Select
                   value={statusFilter}
                   label="Status Filter"
-                  onChange={(e) => setStatusFilter(e.target.value)}
+                  onChange={handleStatusFilterChange}
                 >
                   <MenuItem value="all">All Status</MenuItem>
                   <MenuItem value="active">Active</MenuItem>
@@ -342,14 +540,28 @@ const EnrollmentHistory = () => {
               </FormControl>
             </Grid>
             <Grid item xs={12} md={2}>
-              <Button
-                fullWidth
-                variant="outlined"
-                startIcon={<Refresh />}
-                onClick={fetchEnrollments}
-              >
-                Refresh
-              </Button>
+              <Box display="flex" gap={1}>
+                <Button
+                  variant="outlined"
+                  startIcon={<Refresh />}
+                  onClick={fetchEnrollments}
+                  sx={{ minWidth: 'auto', px: 1 }}
+                  title="Refresh"
+                >
+                  Refresh
+                </Button>
+                {(searchTerm || statusFilter !== 'all') && (
+                  <Button
+                    variant="outlined"
+                    color="secondary"
+                    onClick={handleClearFilters}
+                    sx={{ minWidth: 'auto', px: 1 }}
+                    title="Clear Filters"
+                  >
+                    Clear
+                  </Button>
+                )}
+              </Box>
             </Grid>
           </Grid>
         </CardContent>
@@ -372,17 +584,40 @@ const EnrollmentHistory = () => {
         </Tabs>
       </Card>
 
+      {/* Search Results Info */}
+      {(searchTerm || statusFilter !== 'all') && (
+        <Alert severity="info" sx={{ mb: 2 }}>
+          {searchTerm && statusFilter !== 'all' 
+            ? `Showing results for "${searchTerm}" with status "${statusFilter}"`
+            : searchTerm 
+            ? `Showing results for "${searchTerm}"`
+            : `Showing enrollments with status "${statusFilter}"`}
+          {enrollments.length > 0 && ` (${enrollments.length} found)`}
+        </Alert>
+      )}
+
       {/* Enrollments Table/Grid */}
       {enrollments.length === 0 ? (
         <Card>
           <CardContent sx={{ textAlign: 'center', py: 8 }}>
             <School sx={{ fontSize: 80, color: 'text.secondary', mb: 2 }} />
             <Typography variant="h6" gutterBottom>
-              No enrollments found
+              {searchTerm || statusFilter !== 'all' ? 'No matching enrollments found' : 'No enrollments found'}
             </Typography>
             <Typography variant="body2" color="text.secondary" paragraph>
-              You haven't enrolled in any courses yet.
+              {searchTerm || statusFilter !== 'all' 
+                ? 'Try adjusting your search terms or filters.'
+                : 'You haven\'t enrolled in any courses yet.'}
             </Typography>
+            {searchTerm || statusFilter !== 'all' ? (
+              <Button
+                variant="outlined"
+                onClick={handleClearFilters}
+                sx={{ mr: 1 }}
+              >
+                Clear Filters
+              </Button>
+            ) : null}
             <Button
               variant="contained"
               onClick={() => navigate('/courses')}
@@ -459,7 +694,7 @@ const EnrollmentHistory = () => {
                       </TableCell>
                       <TableCell>
                         <Typography variant="body2" color="primary">
-                          {formatPrice(enrollment.payment.amount)}
+                          {formatPrice(enrollment.payment?.amount, enrollment.payment?.currency)}
                         </Typography>
                       </TableCell>
                       <TableCell>
@@ -472,6 +707,23 @@ const EnrollmentHistory = () => {
                               onClick={() => navigate(`/checkout/${enrollment._id}`)}
                             >
                               Pay Now
+                            </Button>
+                            <IconButton
+                              onClick={(e) => handleMenuClick(e, enrollment)}
+                              size="small"
+                            >
+                              <MoreVert />
+                            </IconButton>
+                          </Box>
+                        ) : enrollment.payment?.paymentStatus === 'completed' ? (
+                          <Box display="flex" gap={1}>
+                            <Button
+                              variant="outlined"
+                              size="small"
+                              startIcon={<Receipt />}
+                              onClick={() => navigate(`/payment/receipt/enrollment/${enrollment._id}`)}
+                            >
+                              View Receipt
                             </Button>
                             <IconButton
                               onClick={(e) => handleMenuClick(e, enrollment)}
@@ -538,7 +790,8 @@ const EnrollmentHistory = () => {
                         </Box>
                       </Box>
                       <Box display="flex" alignItems="center" gap={1}>
-                        {enrollment.payment?.paymentStatus === 'pending' && (
+                        {enrollment.payment?.paymentStatus === 'pending' && 
+                         enrollment.payment?.amount > 0 && (
                           <Button
                             variant="contained"
                             size="small"
@@ -546,6 +799,17 @@ const EnrollmentHistory = () => {
                             onClick={() => navigate(`/checkout/${enrollment._id}`)}
                           >
                             Pay Now
+                          </Button>
+                        )}
+                        {enrollment.payment && 
+                         enrollment.payment?.paymentStatus === 'completed' && (
+                          <Button
+                            variant="outlined"
+                            size="small"
+                            startIcon={<Receipt />}
+                            onClick={() => navigate(`/payment/receipt/enrollment/${enrollment._id}`)}
+                          >
+                            View Receipt
                           </Button>
                         )}
                         <IconButton
@@ -560,7 +824,7 @@ const EnrollmentHistory = () => {
                         Enrolled: {formatDate(enrollment.enrollmentDate)}
                       </Typography>
                       <Typography variant="body2" color="primary">
-                        {formatPrice(enrollment.payment.amount)}
+                        {formatPrice(enrollment.payment?.amount, enrollment.payment?.currency)}
                       </Typography>
                     </Box>
                   </CardContent>
@@ -593,10 +857,18 @@ const EnrollmentHistory = () => {
           <PlayCircle sx={{ mr: 1 }} />
           View Course
         </MenuItem>
-        {selectedEnrollment?.payment?.paymentStatus === 'pending' && (
+        {selectedEnrollment?.payment?.paymentStatus === 'pending' && 
+         selectedEnrollment?.payment?.amount > 0 && (
           <MenuItem onClick={handleGoToCheckout}>
             <ShoppingCart sx={{ mr: 1 }} />
             Complete Payment
+          </MenuItem>
+        )}
+        {selectedEnrollment?.payment && 
+         selectedEnrollment?.payment?.paymentStatus === 'completed' && (
+          <MenuItem onClick={handleViewReceipt}>
+            <Receipt sx={{ mr: 1 }} />
+            View Receipt
           </MenuItem>
         )}
         {selectedEnrollment?.status === 'completed' && 
@@ -606,7 +878,7 @@ const EnrollmentHistory = () => {
             Download Certificate
           </MenuItem>
         )}
-        {selectedEnrollment?.status === 'active' && (
+        {(selectedEnrollment?.status === 'active' || selectedEnrollment?.status === 'pending') && (
           <MenuItem onClick={handleCancelEnrollment}>
             <Cancel sx={{ mr: 1 }} />
             Cancel Enrollment
@@ -615,18 +887,18 @@ const EnrollmentHistory = () => {
       </Menu>
 
       {/* Cancel Confirmation Dialog */}
-      <Dialog open={cancelDialog} onClose={() => setCancelDialog(false)}>
+      <Dialog open={cancelDialog} onClose={() => { setCancelDialog(false); handleMenuClose(); }}>
         <DialogTitle>Cancel Enrollment</DialogTitle>
         <DialogContent>
           <Typography>
-            Are you sure you want to cancel your enrollment in "{selectedEnrollment?.course?.title}"?
+            Are you sure you want to cancel your enrollment in "{selectedEnrollment?.course?.title || 'this course'}"?
           </Typography>
           <Alert severity="warning" sx={{ mt: 2 }}>
             This action cannot be undone. You may lose access to course materials.
           </Alert>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setCancelDialog(false)}>
+          <Button onClick={() => { setCancelDialog(false); handleMenuClose(); }}>
             Keep Enrollment
           </Button>
           <Button

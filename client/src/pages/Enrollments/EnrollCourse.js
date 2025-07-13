@@ -320,7 +320,7 @@ const EnrollCourse = () => {
                 </Box>
                 <Box textAlign="right">
                   <Typography variant="h4" color="primary" gutterBottom>
-                    {course.price === 0 ? 'Free' : formatPrice(course.price)}
+                    {formatPrice(course.price, course.currency)}
                   </Typography>
                   {isEnrolled ? (
                     <Box>
@@ -593,7 +593,7 @@ const EnrollCourse = () => {
           <Box display="flex" justifyContent="space-between" alignItems="center">
             <Typography variant="h6">Total Amount:</Typography>
             <Typography variant="h6" color="primary">
-              {course.price === 0 ? 'Free' : formatPrice(course.price)}
+              {formatPrice(course.price, course.currency)}
             </Typography>
           </Box>
           {course.price > 0 && (

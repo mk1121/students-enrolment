@@ -22,7 +22,8 @@ import AdminPayments from './pages/Admin/Payments';
 import ProtectedRoute from './components/Auth/ProtectedRoute';
 import AdminRoute from './components/Auth/AdminRoute';
 import { EnrollCourse, EnrollmentHistory, CourseProgress } from './pages/Enrollments';
-import { Checkout, PaymentSuccess, PaymentFailure } from './pages/Payment';
+import { Checkout, PaymentSuccess, PaymentFailure, PaymentPending, PaymentReceipt } from './pages/Payment';
+import { SSLCommerzSuccess, SSLCommerzFail, SSLCommerzCancel } from './pages/Payment/SSLCommerz';
 
 function App() {
   const { loading, isAuthenticated } = useAuth();
@@ -110,9 +111,24 @@ function App() {
         } />
         <Route path="payment/pending" element={
           <ProtectedRoute>
-            <PaymentSuccess />
+            <PaymentPending />
           </ProtectedRoute>
         } />
+        <Route path="payment/receipt/:paymentId" element={
+          <ProtectedRoute>
+            <PaymentReceipt />
+          </ProtectedRoute>
+        } />
+        <Route path="payment/receipt/:type/:id" element={
+          <ProtectedRoute>
+            <PaymentReceipt />
+          </ProtectedRoute>
+        } />
+        
+        {/* SSLCommerz Payment Routes */}
+        <Route path="payment/sslcommerz/success" element={<SSLCommerzSuccess />} />
+        <Route path="payment/sslcommerz/fail" element={<SSLCommerzFail />} />
+        <Route path="payment/sslcommerz/cancel" element={<SSLCommerzCancel />} />
       </Route>
 
       {/* Admin Routes */}
