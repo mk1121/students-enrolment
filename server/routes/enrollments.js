@@ -175,7 +175,7 @@ router.post(
     requireStudent,
     body('courseId').isMongoId().withMessage('Valid course ID is required'),
     body('paymentMethod')
-      .isIn(['stripe', 'paypal', 'bank_transfer', 'cash'])
+      .isIn(['stripe', 'sslcommerz', 'cash'])
       .withMessage('Valid payment method is required'),
   ],
   async (req, res) => {

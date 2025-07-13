@@ -183,7 +183,7 @@ module.exports = {
         payment: {
           amount: course.price,
           currency: course.currency,
-          paymentMethod: ['stripe', 'paypal', 'bank_transfer', 'cash'][Math.floor(Math.random() * 4)],
+          paymentMethod: ['stripe', 'sslcommerz', 'cash'][Math.floor(Math.random() * 3)],
           paymentStatus: 'completed',
           paymentDate: new Date(),
           transactionId: `TXN-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`

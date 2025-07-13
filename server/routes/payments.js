@@ -47,7 +47,7 @@ router.post(
       .isMongoId()
       .withMessage('Valid enrollment ID is required'),
     body('paymentMethod')
-      .isIn(['stripe', 'paypal'])
+      .isIn(['stripe', 'sslcommerz'])
       .withMessage('Valid payment method is required'),
   ],
   async (req, res) => {
@@ -561,7 +561,7 @@ router.post(
       .isMongoId()
       .withMessage('Valid enrollment ID is required'),
     body('paymentMethod')
-      .isIn(['stripe', 'sslcommerz', 'bank_transfer'])
+      .isIn(['stripe', 'sslcommerz', 'cash'])
       .withMessage('Valid payment method is required'),
     body('amount').isNumeric().withMessage('Valid amount is required'),
     body('billingAddress')
@@ -623,13 +623,6 @@ router.post(
           break;
         case 'sslcommerz':
           paymentResult = await processSSLCommerzPayment(
-            enrollment,
-            amount,
-            billingAddress
-          );
-          break;
-        case 'bank_transfer':
-          paymentResult = await processBankTransferPayment(
             enrollment,
             amount,
             billingAddress
@@ -953,29 +946,6 @@ async function processSSLCommerzPayment(enrollment, amount, billingAddress) {
     console.error('SSLCommerz payment error:', error);
     throw new Error('SSLCommerz payment failed');
   }
-}
-
-async function processBankTransferPayment(
-  _enrollment,
-  _amount,
-  _billingAddress
-) {
-  // For bank transfer, we'll create a pending payment
-  // The admin would need to manually verify and confirm the payment
-  return {
-    status: 'pending',
-    transactionId: `BANK_${Date.now()}`,
-    gatewayResponse: {
-      message:
-        'Bank transfer payment initiated. Please complete the transfer and notify us.',
-      bankDetails: {
-        accountName: process.env.BANK_ACCOUNT_NAME || 'Your Company Name',
-        accountNumber: process.env.BANK_ACCOUNT_NUMBER || '1234567890',
-        routingNumber: process.env.BANK_ROUTING_NUMBER || '123456789',
-        bankName: process.env.BANK_NAME || 'Your Bank Name',
-      },
-    },
-  };
 }
 
 module.exports = router;
