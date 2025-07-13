@@ -29,7 +29,7 @@ const paymentSchema = new mongoose.Schema(
     },
     paymentMethod: {
       type: String,
-      enum: ['stripe', 'paypal', 'bank_transfer', 'cash', 'sslcommerz'],
+      enum: ['stripe', 'sslcommerz', 'cash'],
       required: [true, 'Payment method is required'],
     },
     status: {
@@ -48,9 +48,6 @@ const paymentSchema = new mongoose.Schema(
       type: String,
     },
     stripeChargeId: {
-      type: String,
-    },
-    paypalPaymentId: {
       type: String,
     },
     transactionId: {
@@ -93,7 +90,6 @@ const paymentSchema = new mongoose.Schema(
       },
       processedAt: Date,
       stripeRefundId: String,
-      paypalRefundId: String,
     },
     fees: {
       stripe: {

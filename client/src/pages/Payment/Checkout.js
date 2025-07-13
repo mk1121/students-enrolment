@@ -78,22 +78,10 @@ const Checkout = () => {
       description: 'Secure payment with Stripe',
     },
     {
-      id: 'paypal',
-      name: 'PayPal',
-      icon: <Payment />,
-      description: 'Pay with your PayPal account',
-    },
-    {
       id: 'sslcommerz',
       name: 'SSLCommerz',
       icon: <LocalAtm />,
       description: 'Local payment gateway',
-    },
-    {
-      id: 'bank_transfer',
-      name: 'Bank Transfer',
-      icon: <AccountBalance />,
-      description: 'Direct bank transfer',
     },
   ];
 
@@ -167,16 +155,9 @@ const Checkout = () => {
         // Handle Stripe payment confirmation
         toast.success('Payment processing...');
         navigate(`/payment/success?enrollment=${enrollmentId}`);
-      } else if (paymentMethod === 'paypal' && response.data.approvalUrl) {
-        // Redirect to PayPal
-        window.location.href = response.data.approvalUrl;
       } else if (paymentMethod === 'sslcommerz' && response.data.gatewayUrl) {
         // Redirect to SSLCommerz
         window.location.href = response.data.gatewayUrl;
-      } else if (paymentMethod === 'bank_transfer') {
-        // Show bank transfer instructions
-        toast.info('Bank transfer instructions sent to your email');
-        navigate(`/payment/pending?enrollment=${enrollmentId}`);
       } else {
         toast.error('Payment method not supported or invalid response');
       }
@@ -402,15 +383,6 @@ const Checkout = () => {
                   </Grid>
                 </Grid>
               </Paper>
-            )}
-
-            {paymentMethod === 'bank_transfer' && (
-              <Alert severity="info" sx={{ mt: 2 }}>
-                <Typography variant="body2">
-                  Bank transfer instructions will be sent to your email after confirmation.
-                  Please allow 2-3 business days for manual verification.
-                </Typography>
-              </Alert>
             )}
           </Box>
         );

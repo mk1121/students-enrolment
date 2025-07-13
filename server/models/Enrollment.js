@@ -86,7 +86,7 @@ const enrollmentSchema = new mongoose.Schema(
       },
       paymentMethod: {
         type: String,
-        enum: ['stripe', 'paypal', 'bank_transfer', 'cash', 'sslcommerz'],
+        enum: ['stripe', 'sslcommerz', 'cash'],
         default: 'stripe',
       },
       paymentStatus: {

@@ -241,11 +241,6 @@ const EnrollmentForm = ({ course, onEnrollmentSuccess }) => {
                   control={<Radio />}
                   label="Mobile Banking (bKash, Nagad, Rocket)"
                 />
-                <FormControlLabel
-                  value="bank_transfer"
-                  control={<Radio />}
-                  label="Bank Transfer"
-                />
               </RadioGroup>
             </FormControl>
 
