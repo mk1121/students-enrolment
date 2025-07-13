@@ -588,7 +588,7 @@ const paymentSchema = new mongoose.Schema({
   method: {
     type: String,
     required: [true, 'Payment method is required'],
-    enum: ['stripe', 'sslcommerz', 'paypal', 'bank_transfer']
+    enum: ['stripe', 'sslcommerz', 'cash']
   },
   provider: {
     paymentIntentId: String, // Stripe

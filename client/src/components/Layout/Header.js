@@ -63,7 +63,8 @@ const Header = () => {
 
   const navItems = [
     { label: 'Home', path: '/' },
-    { label: 'Courses', path: '/courses' }
+    { label: 'Courses', path: '/courses' },
+    ...(isAuthenticated ? [{ label: 'My Enrollments', path: '/enrollments' }] : [])
   ];
 
   const renderNavItems = () => (
@@ -141,6 +142,15 @@ const Header = () => {
         >
           <DashboardIcon sx={{ mr: 1 }} />
           Dashboard
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            navigate('/enrollments');
+            handleUserMenuClose();
+          }}
+        >
+          <SchoolIcon sx={{ mr: 1 }} />
+          My Enrollments
         </MenuItem>
         <MenuItem
           onClick={() => {

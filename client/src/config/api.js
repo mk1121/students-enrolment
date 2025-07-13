@@ -12,3 +12,6 @@ const config = {
 };
 
 export default config;
+
+// Export the API_BASE_URL directly for convenience
+export const API_BASE_URL = config.API_BASE_URL;
