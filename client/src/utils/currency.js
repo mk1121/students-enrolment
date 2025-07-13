@@ -7,12 +7,27 @@
  * @returns {string} Formatted price string
  */
 export const formatPrice = (price, currency = 'BDT') => {
-  if (price === 0 || price === null || price === undefined) return 'Free';
-  if (isNaN(price)) return 'Price not available';
+  // Handle null, undefined values
+  if (price === null || price === undefined) {
+    return 'Free';
+  }
+  
+  // Convert to number if it's a string
+  const numericPrice = typeof price === 'string' ? parseFloat(price) : price;
+  
+  // Check if it's a valid number
+  if (isNaN(numericPrice)) {
+    return 'Price not available';
+  }
+  
+  // Handle zero after conversion
+  if (numericPrice === 0) {
+    return 'Free';
+  }
   
   // Handle BDT currency with ৳ symbol
   if (currency === 'BDT') {
-    return `৳${price.toLocaleString('en-BD')}`;
+    return `৳${numericPrice.toLocaleString('en-BD')}`;
   }
   
   // Handle other currencies
@@ -20,10 +35,10 @@ export const formatPrice = (price, currency = 'BDT') => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: currency,
-    }).format(price);
+    }).format(numericPrice);
   } catch (error) {
     // Fallback for unsupported currencies
-    return `${currency} ${price.toLocaleString()}`;
+    return `${currency} ${numericPrice.toLocaleString()}`;
   }
 };
 

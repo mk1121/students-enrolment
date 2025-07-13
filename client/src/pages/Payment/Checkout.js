@@ -13,7 +13,6 @@ import {
   FormControlLabel,
   Radio,
   FormControl,
-  TextField,
   Alert,
   CircularProgress,
   Stepper,
@@ -29,9 +28,7 @@ import {
 } from '@mui/material';
 import {
   CreditCard,
-  Payment,
   LocalAtm,
-  AccountBalance,
   Security,
   CheckCircle,
   School,
@@ -41,6 +38,9 @@ import {
 } from '@mui/icons-material';
 import { toast } from 'react-toastify';
 import axios from 'axios';
+import { Elements } from '@stripe/react-stripe-js';
+import getStripe from '../../config/stripe';
+import StripeCheckoutForm from '../../components/Payment/StripeCheckoutForm';
 import { API_BASE_URL } from '../../config/api';
 import { formatPrice } from '../../utils/currency';
 import { useAuth } from '../../context/AuthContext';
@@ -54,6 +54,9 @@ const Checkout = () => {
   const [processing, setProcessing] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('stripe');
   const [activeStep, setActiveStep] = useState(0);
+  const [clientSecret, setClientSecret] = useState(null);
+  const [stripePromise] = useState(() => getStripe());
+  // eslint-disable-next-line no-unused-vars
   const [paymentData, setPaymentData] = useState({
     cardNumber: '',
     expiryDate: '',
@@ -78,22 +81,10 @@ const Checkout = () => {
       description: 'Secure payment with Stripe',
     },
     {
-      id: 'paypal',
-      name: 'PayPal',
-      icon: <Payment />,
-      description: 'Pay with your PayPal account',
-    },
-    {
       id: 'sslcommerz',
       name: 'SSLCommerz',
       icon: <LocalAtm />,
       description: 'Local payment gateway',
-    },
-    {
-      id: 'bank_transfer',
-      name: 'Bank Transfer',
-      icon: <AccountBalance />,
-      description: 'Direct bank transfer',
     },
   ];
 
@@ -119,30 +110,68 @@ const Checkout = () => {
     setPaymentMethod(event.target.value);
   };
 
-  const handleInputChange = (field, value) => {
-    if (field.includes('.')) {
-      const [parent, child] = field.split('.');
-      setPaymentData(prev => ({
-        ...prev,
-        [parent]: {
-          ...prev[parent],
-          [child]: value,
-        },
-      }));
-    } else {
-      setPaymentData(prev => ({
-        ...prev,
-        [field]: value,
-      }));
-    }
-  };
-
   const handleNext = () => {
     if (activeStep === steps.length - 1) {
-      handlePayment();
+      if (paymentMethod === 'stripe') {
+        handleCreatePaymentIntent();
+      } else {
+        handlePayment();
+      }
     } else {
       setActiveStep(prev => prev + 1);
     }
+  };
+
+  const handleCreatePaymentIntent = async () => {
+    setProcessing(true);
+    try {
+      const paymentPayload = {
+        enrollmentId,
+        paymentMethod: 'stripe',
+      };
+
+      console.log('Creating payment intent with payload:', paymentPayload);
+      const response = await axios.post(`${API_BASE_URL}/payments/create-payment-intent`, paymentPayload);
+      console.log('Payment intent response:', response.data);
+      
+      if (response.data.clientSecret) {
+        setClientSecret(response.data.clientSecret);
+        // Payment form is ready - no toast needed as UI will update
+      } else {
+        toast.error('Failed to initialize payment');
+      }
+    } catch (error) {
+      console.error('Payment intent creation error:', error);
+      console.error('Error response:', error.response?.data);
+      toast.error(error.response?.data?.message || 'Failed to initialize payment');
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const handleStripePaymentSuccess = async (paymentIntent) => {
+    console.log('Stripe payment successful:', paymentIntent);
+    
+    try {
+      // Confirm payment success with backend
+      await axios.post(`${API_BASE_URL}/payments/confirm-success`, {
+        enrollmentId,
+        paymentIntentId: paymentIntent.id,
+      });
+      
+      console.log('Payment confirmation sent to backend');
+    } catch (error) {
+      console.error('Error confirming payment with backend:', error);
+      // Continue to success page even if confirmation fails (webhook should handle it)
+    }
+    
+    // Navigate to success page
+    navigate(`/payment/success?enrollment=${enrollmentId}&payment_intent=${paymentIntent.id}`);
+  };
+
+  const handleStripePaymentError = (error) => {
+    console.error('Stripe payment error:', error);
+    toast.error(error.message || 'Payment failed');
   };
 
   const handleBack = () => {
@@ -152,31 +181,32 @@ const Checkout = () => {
   const handlePayment = async () => {
     setProcessing(true);
     try {
-      const paymentPayload = {
-        enrollmentId,
-        paymentMethod,
-        ...(paymentMethod === 'stripe' && { paymentData }),
-      };
-
-      console.log('Creating payment intent with payload:', paymentPayload);
-      const response = await axios.post(`${API_BASE_URL}/payments/create-payment-intent`, paymentPayload);
-      console.log('Payment intent response:', response.data);
+      let response;
       
-      // Handle different payment methods
-      if (paymentMethod === 'stripe' && response.data.clientSecret) {
-        // Handle Stripe payment confirmation
-        toast.success('Payment processing...');
-        navigate(`/payment/success?enrollment=${enrollmentId}`);
-      } else if (paymentMethod === 'paypal' && response.data.approvalUrl) {
-        // Redirect to PayPal
-        window.location.href = response.data.approvalUrl;
-      } else if (paymentMethod === 'sslcommerz' && response.data.gatewayUrl) {
+      if (paymentMethod === 'sslcommerz') {
+        // Use dedicated SSLCommerz endpoint
+        const sslcommerzPayload = {
+          enrollmentId,
+        };
+        console.log('Creating SSLCommerz payment with payload:', sslcommerzPayload);
+        response = await axios.post(`${API_BASE_URL}/payments/sslcommerz/init`, sslcommerzPayload);
+      } else {
+        // Use generic endpoint for other payment methods
+        const paymentPayload = {
+          enrollmentId,
+          paymentMethod,
+          ...(paymentMethod !== 'stripe' && { paymentData }),
+        };
+        console.log('Creating payment with payload:', paymentPayload);
+        response = await axios.post(`${API_BASE_URL}/payments/create-payment-intent`, paymentPayload);
+      }
+      
+      console.log('Payment response:', response.data);
+      
+      // Handle different payment methods (non-Stripe)
+      if (paymentMethod === 'sslcommerz' && response.data.gatewayUrl) {
         // Redirect to SSLCommerz
         window.location.href = response.data.gatewayUrl;
-      } else if (paymentMethod === 'bank_transfer') {
-        // Show bank transfer instructions
-        toast.info('Bank transfer instructions sent to your email');
-        navigate(`/payment/pending?enrollment=${enrollmentId}`);
       } else {
         toast.error('Payment method not supported or invalid response');
       }
@@ -316,101 +346,17 @@ const Checkout = () => {
             {paymentMethod === 'stripe' && (
               <Paper sx={{ p: 3 }}>
                 <Typography variant="h6" gutterBottom>
-                  Card Details
+                  Credit/Debit Card Payment
                 </Typography>
-                <Grid container spacing={2}>
-                  <Grid item xs={12}>
-                    <TextField
-                      fullWidth
-                      label="Cardholder Name"
-                      value={paymentData.cardholderName}
-                      onChange={(e) => handleInputChange('cardholderName', e.target.value)}
-                    />
-                  </Grid>
-                  <Grid item xs={12}>
-                    <TextField
-                      fullWidth
-                      label="Card Number"
-                      value={paymentData.cardNumber}
-                      onChange={(e) => handleInputChange('cardNumber', e.target.value)}
-                      placeholder="1234 5678 9012 3456"
-                    />
-                  </Grid>
-                  <Grid item xs={6}>
-                    <TextField
-                      fullWidth
-                      label="Expiry Date"
-                      value={paymentData.expiryDate}
-                      onChange={(e) => handleInputChange('expiryDate', e.target.value)}
-                      placeholder="MM/YY"
-                    />
-                  </Grid>
-                  <Grid item xs={6}>
-                    <TextField
-                      fullWidth
-                      label="CVV"
-                      value={paymentData.cvv}
-                      onChange={(e) => handleInputChange('cvv', e.target.value)}
-                      placeholder="123"
-                    />
-                  </Grid>
-                </Grid>
-                
-                <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
-                  Billing Address
+                <Typography variant="body2" color="text.secondary">
+                  Your card details will be securely processed in the next step using Stripe's secure payment system.
                 </Typography>
-                <Grid container spacing={2}>
-                  <Grid item xs={12}>
-                    <TextField
-                      fullWidth
-                      label="Street Address"
-                      value={paymentData.billingAddress.street}
-                      onChange={(e) => handleInputChange('billingAddress.street', e.target.value)}
-                    />
-                  </Grid>
-                  <Grid item xs={6}>
-                    <TextField
-                      fullWidth
-                      label="City"
-                      value={paymentData.billingAddress.city}
-                      onChange={(e) => handleInputChange('billingAddress.city', e.target.value)}
-                    />
-                  </Grid>
-                  <Grid item xs={6}>
-                    <TextField
-                      fullWidth
-                      label="State"
-                      value={paymentData.billingAddress.state}
-                      onChange={(e) => handleInputChange('billingAddress.state', e.target.value)}
-                    />
-                  </Grid>
-                  <Grid item xs={6}>
-                    <TextField
-                      fullWidth
-                      label="ZIP Code"
-                      value={paymentData.billingAddress.zipCode}
-                      onChange={(e) => handleInputChange('billingAddress.zipCode', e.target.value)}
-                    />
-                  </Grid>
-                  <Grid item xs={6}>
-                    <TextField
-                      fullWidth
-                      label="Country"
-                      value={paymentData.billingAddress.country}
-                      onChange={(e) => handleInputChange('billingAddress.country', e.target.value)}
-                    />
-                  </Grid>
-                </Grid>
+                <Alert severity="info" sx={{ mt: 2 }}>
+                  <Typography variant="body2">
+                    🔒 Your payment information is encrypted and secure. No card details are stored on our servers.
+                  </Typography>
+                </Alert>
               </Paper>
-            )}
-
-            {paymentMethod === 'bank_transfer' && (
-              <Alert severity="info" sx={{ mt: 2 }}>
-                <Typography variant="body2">
-                  Bank transfer instructions will be sent to your email after confirmation.
-                  Please allow 2-3 business days for manual verification.
-                </Typography>
-              </Alert>
             )}
           </Box>
         );
@@ -420,10 +366,20 @@ const Checkout = () => {
           <Box textAlign="center">
             <CheckCircle sx={{ fontSize: 80, color: 'success.main', mb: 2 }} />
             <Typography variant="h5" gutterBottom>
-              Review Your Order
+              {paymentMethod === 'stripe' && !clientSecret 
+                ? 'Review Your Order' 
+                : paymentMethod === 'stripe' && clientSecret 
+                  ? 'Enter Payment Details' 
+                  : 'Complete Payment'
+              }
             </Typography>
             <Typography variant="body1" color="text.secondary" paragraph>
-              Please review your order details before completing the payment.
+              {paymentMethod === 'stripe' && !clientSecret 
+                ? 'Please review your order details before initializing the payment.'
+                : paymentMethod === 'stripe' && clientSecret
+                  ? 'Enter your card details below to complete the payment securely.'
+                  : 'Enter your payment details to complete the purchase.'
+              }
             </Typography>
             
             {enrollment && (
@@ -449,15 +405,32 @@ const Checkout = () => {
                 </Box>
               </Paper>
             )}
+
+            {/* Stripe Elements Integration */}
+            {paymentMethod === 'stripe' && clientSecret && stripePromise && enrollment && (
+              <Elements stripe={stripePromise} options={{ clientSecret }}>
+                <StripeCheckoutForm
+                  clientSecret={clientSecret}
+                  amount={Math.round(enrollment.payment.amount * 100)}
+                  currency={enrollment.payment.currency}
+                  onSuccess={handleStripePaymentSuccess}
+                  onError={handleStripePaymentError}
+                  processing={processing}
+                  onProcessingChange={setProcessing}
+                />
+              </Elements>
+            )}
             
-            <Alert severity="info" sx={{ mb: 2 }}>
-              <Box display="flex" alignItems="center" gap={1}>
-                <Security />
-                <Typography variant="body2">
-                  Your payment is secured with 256-bit SSL encryption
-                </Typography>
-              </Box>
-            </Alert>
+            {paymentMethod !== 'stripe' && (
+              <Alert severity="info" sx={{ mb: 2 }}>
+                <Box display="flex" alignItems="center" gap={1}>
+                  <Security />
+                  <Typography variant="body2">
+                    Your payment is secured with 256-bit SSL encryption
+                  </Typography>
+                </Box>
+              </Alert>
+            )}
           </Box>
         );
 
@@ -513,14 +486,21 @@ const Checkout = () => {
                 >
                   Back
                 </Button>
-                <Button
-                  variant="contained"
-                  onClick={handleNext}
-                  disabled={processing}
-                  startIcon={processing && <CircularProgress size={20} />}
-                >
-                  {activeStep === steps.length - 1 ? 'Complete Payment' : 'Next'}
-                </Button>
+                
+                {/* Only show Next/Complete Payment button if not on Stripe payment confirmation */}
+                {!(paymentMethod === 'stripe' && activeStep === steps.length - 1 && clientSecret) && (
+                  <Button
+                    variant="contained"
+                    onClick={handleNext}
+                    disabled={processing}
+                    startIcon={processing && <CircularProgress size={20} />}
+                  >
+                    {activeStep === steps.length - 1 
+                      ? (paymentMethod === 'stripe' ? 'Initialize Payment' : 'Complete Payment')
+                      : 'Next'
+                    }
+                  </Button>
+                )}
               </Box>
             </CardContent>
           </Card>

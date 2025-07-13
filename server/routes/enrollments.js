@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 const express = require('express');
 const { body, validationResult, query } = require('express-validator');
 const Enrollment = require('../models/Enrollment');
@@ -107,17 +108,95 @@ router.get(
 // @access  Private (Student/Admin)
 router.get('/my-enrollments', [authenticateToken], async (req, res) => {
   try {
-    const enrollments = await Enrollment.find({ student: req.user._id })
-      .populate(
-        'course',
-        'title description thumbnail price duration category level instructor'
-      )
-      .populate('payment', 'amount status paymentMethod')
-      .sort({ enrolledAt: -1 });
+    const {
+      status,
+      search,
+      page = 1,
+      limit = 10,
+      sortBy = 'enrollmentDate',
+      sortOrder = 'desc',
+    } = req.query;
+
+    // Build filter query
+    const filter = { student: req.user._id };
+
+    // Add status filter if provided
+    if (status && status !== 'all') {
+      filter.status = status;
+    }
+
+    // Build aggregation pipeline for search
+    const pipeline = [
+      { $match: filter },
+      {
+        $lookup: {
+          from: 'courses',
+          localField: 'course',
+          foreignField: '_id',
+          as: 'course',
+        },
+      },
+      { $unwind: '$course' },
+    ];
+
+    // Add search filter if provided
+    if (search && search.trim()) {
+      pipeline.push({
+        $match: {
+          $or: [
+            { 'course.title': { $regex: search, $options: 'i' } },
+            { 'course.description': { $regex: search, $options: 'i' } },
+            { 'course.category': { $regex: search, $options: 'i' } },
+            { 'course.level': { $regex: search, $options: 'i' } },
+          ],
+        },
+      });
+    }
+
+    // Add sorting
+    const sortObj = {};
+    sortObj[sortBy] = sortOrder === 'desc' ? -1 : 1;
+    pipeline.push({ $sort: sortObj });
+
+    // Get total count for pagination
+    const totalPipeline = [...pipeline, { $count: 'total' }];
+    const totalResult = await Enrollment.aggregate(totalPipeline);
+    const total = totalResult[0]?.total || 0;
+
+    // Add pagination
+    const skip = (parseInt(page, 10) - 1) * parseInt(limit, 10);
+    pipeline.push({ $skip: skip });
+    pipeline.push({ $limit: parseInt(limit, 10) });
+
+    // Execute aggregation
+    const enrollments = await Enrollment.aggregate(pipeline);
+
+    // Get all enrollments for stats (without pagination)
+    const allEnrollments = await Enrollment.find({ student: req.user._id })
+      .populate('course', 'title')
+      .select('status');
+
+    // Calculate stats
+    const stats = {
+      total: allEnrollments.length,
+      active: allEnrollments.filter(e => e.status === 'active').length,
+      completed: allEnrollments.filter(e => e.status === 'completed').length,
+      pending: allEnrollments.filter(e => e.status === 'pending').length,
+      cancelled: allEnrollments.filter(e => e.status === 'cancelled').length,
+      refunded: allEnrollments.filter(e => e.status === 'refunded').length,
+    };
 
     res.json({
       enrollments,
       count: enrollments.length,
+      total,
+      stats,
+      pagination: {
+        currentPage: parseInt(page, 10),
+        totalPages: Math.ceil(total / parseInt(limit, 10)),
+        totalItems: total,
+        itemsPerPage: parseInt(limit, 10),
+      },
     });
   } catch (error) {
     console.error('Get my-enrollments error:', error);
@@ -175,7 +254,7 @@ router.post(
     requireStudent,
     body('courseId').isMongoId().withMessage('Valid course ID is required'),
     body('paymentMethod')
-      .isIn(['stripe', 'paypal', 'bank_transfer', 'cash'])
+      .isIn(['stripe', 'cash', 'sslcommerz'])
       .withMessage('Valid payment method is required'),
   ],
   async (req, res) => {
@@ -226,16 +305,21 @@ router.post(
         });
       }
 
-      // Create enrollment
+      // Create enrollment with proper payment amount validation
+      const paymentAmount = course.price || 0;
       const enrollment = new Enrollment({
         student: req.user._id,
         course: courseId,
         payment: {
-          amount: course.price,
-          currency: course.currency,
+          amount: paymentAmount,
+          currency: course.currency || 'BDT',
           paymentMethod,
-          paymentStatus: 'pending',
+          paymentStatus: paymentAmount === 0 ? 'completed' : 'pending',
+          ...(paymentAmount === 0 && { paymentDate: new Date() }),
         },
+        // Set status to active for free courses
+        status: paymentAmount === 0 ? 'active' : 'pending',
+        ...(paymentAmount === 0 && { startDate: new Date() }),
       });
 
       await enrollment.save();
@@ -297,13 +381,25 @@ router.put(
 
       const { status, reason } = req.body;
 
+      console.log(`Updating enrollment ${req.params.id} to status: ${status}`);
+      console.log('Request body:', req.body);
+      console.log('User:', req.user._id, req.user.role);
+
       const enrollment = await Enrollment.findById(req.params.id);
 
       if (!enrollment) {
+        console.log('Enrollment not found:', req.params.id);
         return res.status(404).json({
           message: 'Enrollment not found',
         });
       }
+
+      console.log('Found enrollment:', {
+        id: enrollment._id,
+        student: enrollment.student,
+        course: enrollment.course,
+        currentStatus: enrollment.status,
+      });
 
       // Check if user has permission to update this enrollment
       if (
@@ -325,22 +421,49 @@ router.put(
       const oldStatus = enrollment.status;
       enrollment.status = status;
 
+      console.log(`Status change: ${oldStatus} -> ${status}`);
+
       // Handle status-specific logic
       if (status === 'active' && oldStatus === 'pending') {
+        console.log('Setting start date for newly active enrollment');
         enrollment.startDate = new Date();
       } else if (status === 'completed') {
+        console.log('Setting completion date for completed enrollment');
         enrollment.completionDate = new Date();
       } else if (status === 'cancelled' || status === 'refunded') {
-        // Update course student count
-        const course = await Course.findById(enrollment.course);
-        if (course && course.currentStudents > 0) {
-          course.currentStudents -= 1;
-          await course.save();
+        console.log(
+          'Processing cancellation/refund - updating course student count'
+        );
+        try {
+          // Update course student count
+          const course = await Course.findById(enrollment.course);
+          if (course) {
+            console.log(
+              `Found course: ${course.title}, current students: ${course.currentStudents}`
+            );
+            if (course.currentStudents > 0) {
+              course.currentStudents -= 1;
+              await course.save();
+              console.log(
+                `Updated course student count to: ${course.currentStudents}`
+              );
+            } else {
+              console.log(
+                'Course currentStudents already at 0, skipping decrement'
+              );
+            }
+          } else {
+            console.log('Course not found for enrollment:', enrollment.course);
+          }
+        } catch (courseError) {
+          console.error('Error updating course student count:', courseError);
+          // Don't fail the entire operation due to course update error
         }
       }
 
       // Add note if reason provided
       if (reason) {
+        console.log('Adding note to enrollment:', reason);
         const noteData = {
           note: reason,
           createdAt: new Date(),
@@ -349,12 +472,16 @@ router.put(
         if (req.user.role === 'admin') {
           noteData.createdBy = req.user._id;
           enrollment.notes.admin.push(noteData);
+          console.log('Added admin note');
         } else {
           enrollment.notes.student.push(noteData);
+          console.log('Added student note');
         }
       }
 
+      console.log('Saving enrollment with updated status');
       await enrollment.save();
+      console.log('Enrollment saved successfully');
 
       res.json({
         message: 'Enrollment status updated successfully',
@@ -362,8 +489,29 @@ router.put(
       });
     } catch (error) {
       console.error('Update enrollment status error:', error);
+      console.error('Error name:', error.name);
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
+
+      // Check for specific MongoDB/Mongoose errors
+      if (error.name === 'ValidationError') {
+        return res.status(400).json({
+          message: 'Validation error while updating enrollment',
+          details: error.message,
+        });
+      }
+
+      if (error.name === 'CastError') {
+        return res.status(400).json({
+          message: 'Invalid enrollment ID format',
+          details: error.message,
+        });
+      }
+
       res.status(500).json({
         message: 'Server error while updating enrollment status',
+        error:
+          process.env.NODE_ENV === 'development' ? error.message : undefined,
       });
     }
   }

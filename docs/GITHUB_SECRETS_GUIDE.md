@@ -84,12 +84,6 @@ SSLCOMMERZ_STORE_PASSWORD=your-store-password
 SSLCOMMERZ_IS_LIVE=false
 ```
 
-#### PayPal
-```
-PAYPAL_CLIENT_ID=your-paypal-client-id
-PAYPAL_CLIENT_SECRET=your-paypal-client-secret
-```
-
 ---
 
 ### 🌐 **RENDER DEPLOYMENT SECRETS (NEW)**

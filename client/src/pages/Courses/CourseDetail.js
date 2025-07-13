@@ -450,7 +450,7 @@ const CourseDetail = () => {
                     </>
                   ) : (
                     <Typography variant="h4" color="primary">
-                      {course.price === 0 ? 'Free' : formatPrice(course.price, course.currency || 'BDT')}
+                      {formatPrice(course.price, course.currency || 'BDT')}
                     </Typography>
                   )}
                 </Box>
@@ -609,7 +609,7 @@ const CourseDetail = () => {
                           <Typography variant="body2" color="text.secondary">
                             {similarCourse.instructor?.name}
                           </Typography>                        <Typography variant="body2" fontWeight="bold">
-                          {similarCourse.price === 0 ? 'Free' : formatPrice(similarCourse.price, similarCourse.currency || 'BDT')}
+                          {formatPrice(similarCourse.price, similarCourse.currency || 'BDT')}
                         </Typography>
                         </Box>
                       </CardContent>

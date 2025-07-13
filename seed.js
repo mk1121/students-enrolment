@@ -482,8 +482,8 @@ async function seedDatabase() {
         payment: {
           amount: course.price,
           currency: course.currency,
-          paymentMethod: ['stripe', 'paypal', 'bank_transfer', 'cash'][
-            Math.floor(Math.random() * 4)
+          paymentMethod: ['stripe', 'sslcommerz', 'cash'][
+            Math.floor(Math.random() * 3)
           ],
           paymentStatus: ['completed', 'pending'][
             Math.floor(Math.random() * 2)

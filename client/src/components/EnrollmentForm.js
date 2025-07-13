@@ -241,11 +241,6 @@ const EnrollmentForm = ({ course, onEnrollmentSuccess }) => {
                   control={<Radio />}
                   label="Mobile Banking (bKash, Nagad, Rocket)"
                 />
-                <FormControlLabel
-                  value="bank_transfer"
-                  control={<Radio />}
-                  label="Bank Transfer"
-                />
               </RadioGroup>
             </FormControl>
 
@@ -290,7 +285,7 @@ const EnrollmentForm = ({ course, onEnrollmentSuccess }) => {
         
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
           <Typography variant="h4" color="primary">
-            {course.price === 0 ? 'Free' : formatPrice(course.price)}
+            {formatPrice(course.price, course.currency)}
           </Typography>
           {course.originalPrice && course.originalPrice > course.price && (
             <Box>

@@ -24,12 +24,12 @@ const paymentSchema = new mongoose.Schema(
     },
     currency: {
       type: String,
-      default: 'USD',
+      default: 'BDT',
       enum: ['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'BDT'],
     },
     paymentMethod: {
       type: String,
-      enum: ['stripe', 'paypal', 'bank_transfer', 'cash', 'sslcommerz'],
+      enum: ['stripe', 'cash', 'sslcommerz'],
       required: [true, 'Payment method is required'],
     },
     status: {
@@ -50,9 +50,6 @@ const paymentSchema = new mongoose.Schema(
     stripeChargeId: {
       type: String,
     },
-    paypalPaymentId: {
-      type: String,
-    },
     transactionId: {
       type: String,
       unique: true,
@@ -67,6 +64,15 @@ const paymentSchema = new mongoose.Schema(
       courseTitle: String,
       courseId: String,
       enrollmentId: String,
+      // SSLCommerz specific fields
+      sslTransactionId: String,
+      sessionkey: String,
+      validationId: String,
+      bankTransactionId: String,
+      cardType: String,
+      storeAmount: Number,
+      originalAmount: Number,
+      originalCurrency: String,
     },
     billingDetails: {
       name: String,
@@ -93,7 +99,6 @@ const paymentSchema = new mongoose.Schema(
       },
       processedAt: Date,
       stripeRefundId: String,
-      paypalRefundId: String,
     },
     fees: {
       stripe: {
