@@ -430,6 +430,15 @@ const Dashboard = () => {
                 >
                   Edit Profile
                 </Button>
+                <Button
+                  component={Link}
+                  to="/payment/history"
+                  variant="outlined"
+                  fullWidth
+                  startIcon={<Payment />}
+                >
+                  Payment History
+                </Button>
                 {dashboardData.enrollments.length > 0 && (
                   <Button
                     variant="outlined"
