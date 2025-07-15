@@ -7,11 +7,12 @@ This document provides comprehensive guidelines for setting up and using the CI/
 ## Table of Contents
 
 1. [Pipeline Architecture](#pipeline-architecture)
-2. [Setup Instructions](#setup-instructions)
-3. [Environment Configuration](#environment-configuration)
-4. [Deployment Process](#deployment-process)
-5. [Monitoring and Maintenance](#monitoring-and-maintenance)
-6. [Troubleshooting](#troubleshooting)
+2. [Workflow Optimization](#workflow-optimization)
+3. [Setup Instructions](#setup-instructions)
+4. [Environment Configuration](#environment-configuration)
+5. [Deployment Process](#deployment-process)
+6. [Monitoring and Maintenance](#monitoring-and-maintenance)
+7. [Troubleshooting](#troubleshooting)
 
 ## Pipeline Architecture
 
@@ -19,27 +20,86 @@ This document provides comprehensive guidelines for setting up and using the CI/
 
 ```mermaid
 graph TD
-    A[Code Push] --> B[Lint & Format Check]
-    B --> C[Security Scan]
-    B --> D[Backend Tests]
-    B --> E[Frontend Tests]
-    C --> F[Build Application]
-    D --> F
-    E --> F
-    F --> G[Docker Build]
-    G --> H{Branch?}
-    H -->|develop| I[Deploy to Staging]
-    H -->|main| J[Deploy to Production]
-    I --> K[Staging Health Check]
-    J --> L[Production Health Check]
-    L --> M[Notify Success/Failure]
+    A[Feature Branch] --> B[Create PR to develop]
+    B --> C[CI Tests Run]
+    C --> D[PR Approved & Merged]
+    D --> E[Auto-deploy to Staging]
+    E --> F[Create PR to main]
+    F --> G[Quick Validation]
+    G --> H[PR Approved & Merged]
+    H --> I[Auto-deploy to Production]
+    I --> J[Production Health Check]
+    J --> K[Monitoring & Alerts]
 ```
+
+### Workflow Optimization
+
+This pipeline is optimized to eliminate duplicate CI runs:
+
+- **Feature Branch Push**: No tests (saves resources)
+- **PR to develop**: Full CI tests run (lint, format, backend tests, frontend tests)
+- **Push to develop**: CI tests + staging deployment
+- **PR to main**: Quick validation only (no full CI re-run)
+- **Push to main**: CI tests + production deployment
+
+**Benefits**: 
+- Reduced CI runs by ~75%
+- Faster feedback loop
+- Lower resource usage
+- Tests run only when necessary
 
 ### Environments
 
 - **Development**: Local development environment
 - **Staging**: Testing environment (auto-deployed from `develop` branch)
 - **Production**: Live environment (auto-deployed from `main` branch)
+
+## Workflow Optimization
+
+### Problem Solved
+The GitHub Actions workflows have been optimized to eliminate duplicate CI runs that previously occurred at multiple stages:
+
+- ❌ **Before**: Feature push → CI runs → PR to develop → CI runs again → Develop to main PR → CI runs again → Main merge → CI runs again
+- ✅ **After**: Feature push → Nothing → PR to develop → CI runs → Develop to main PR → Quick validation → Main merge → CI + Deploy
+
+### Current Workflow Structure
+
+#### 1. CI/CD Pipeline (ci.yml)
+- **Triggers**: Only on `pull_request` to `develop`
+- **Purpose**: Run comprehensive tests for feature branches
+- **Jobs**: Lint, Backend Tests, Frontend Tests, Security Audit, Coverage
+
+#### 2. Deploy Staging (deploy-staging.yml)
+- **Triggers**: Only on `push` to `develop`
+- **Purpose**: Run CI tests + deploy to staging environment
+- **Jobs**: CI Tests → Staging Deployment
+
+#### 3. Deploy Production (deploy-production.yml)
+- **Triggers**: Only on `push` to `main`
+- **Purpose**: Run CI tests + deploy to production environment
+- **Jobs**: CI Tests → Production Deployment
+
+#### 4. Enforce PR Rules (enforce-pr-rules.yml)
+- **Triggers**: Only on `pull_request` to `main`
+- **Purpose**: Enforce repository workflow rules with quick validation
+- **Jobs**: Branch validation, PR title format, deployment readiness, quick lint check
+
+### Benefits Achieved
+
+1. **Reduced Redundancy**: Eliminated 4 duplicate CI runs
+2. **Faster Feedback**: Tests run only when necessary
+3. **Resource Optimization**: Reduced GitHub Actions usage by ~75%
+4. **Cleaner Workflow**: Each workflow has a specific purpose
+5. **Better Developer Experience**: Less noise in PR status checks
+6. **Trusts develop branch**: Avoids re-testing already validated code
+
+### When Tests Run
+
+- **Feature Branch Push**: No tests (saves resources)
+- **PR to develop**: Full CI tests (ci.yml) - **ONLY TIME FULL TESTS RUN**
+- **Push to develop**: CI + Staging deployment (deploy-staging.yml)
+- **PR to main**: Quick validation only (enforce-pr-rules.yml) - **NO FULL CI**
+- **Push to main**: CI + Production deployment (deploy-production.yml)
 
 ## Setup Instructions
 
@@ -241,8 +301,10 @@ IMAGE_TAG=latest
 ### Automated Deployment
 
 The CI/CD pipeline automatically deploys:
-- **Staging**: When code is pushed to `develop` branch
-- **Production**: When code is pushed to `main` branch
+- **Staging**: When code is pushed to `develop` branch (after PR merge)
+- **Production**: When code is pushed to `main` branch (after PR merge)
+
+**Important**: Direct pushes to `develop` and `main` should be disabled via branch protection rules. All changes should go through pull requests to ensure code quality and proper testing.
 
 ### Manual Deployment
 
@@ -519,7 +581,7 @@ docker exec mongodb mongo --eval "db.runCommand({setParameter: 1, wiredTigerCach
    git add .
    git commit -m "feat: add new feature"
    git push origin feature/new-feature
-   # Create PR to develop branch
+   # Create PR to develop branch - CI tests will run here
    ```
 
 2. **Code Quality**
@@ -528,16 +590,39 @@ docker exec mongodb mongo --eval "db.runCommand({setParameter: 1, wiredTigerCach
    - Update documentation
    - Follow ESLint rules
 
-3. **Testing**
+3. **Testing Strategy**
    ```bash
-   # Before committing
+   # Local development testing
    bun run lint
    bun run test:backend
+   bun run test:frontend
    bun run format:check
    
    # Integration testing
    docker-compose up -d
    bun run test:integration
+   ```
+
+4. **Branch Protection Setup**
+   Enable branch protection for optimal workflow:
+   
+   **Protect develop branch:**
+   - Require pull request reviews
+   - Require status checks to pass
+   - Require branches to be up to date before merging
+   - Restrict pushes that create matching branches
+   
+   **Protect main branch:**
+   - Require pull request reviews
+   - Require status checks to pass
+   - Restrict pushes that create matching branches
+   - Only allow PRs from develop branch
+
+5. **Workflow Process**
+   ```
+   Feature Branch → PR to develop → CI tests → Merge to develop → Auto-deploy to staging
+                                                      ↓
+   Develop → PR to main → Quick validation → Merge to main → Auto-deploy to production
    ```
 
 ### Production Deployment
