@@ -1,5 +1,6 @@
 node_modules
 .env
+.copilot-instructions.md
 
 # OAuth2 credentials and tokens
 token.json
