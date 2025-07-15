@@ -62,7 +62,9 @@ jobs:
         
       - name: Run frontend tests
         working-directory: ./client
-        run: bun test --run
+        run: bun run test:ci
+        env:
+          CI: true
 
   # Job 2: Deploy Frontend to GitHub Pages (Staging)
   deploy-frontend-staging:
