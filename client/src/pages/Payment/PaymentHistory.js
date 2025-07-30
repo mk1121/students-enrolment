@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Container,
   Paper,
@@ -57,11 +57,7 @@ const PaymentHistory = () => {
     pendingTransactions: 0,
   });
 
-  useEffect(() => {
-    fetchPayments();
-  }, [page, rowsPerPage, statusFilter]);
-
-  const fetchPayments = async () => {
+  const fetchPayments = useCallback(async () => {
     try {
       setLoading(true);
       setError('');
@@ -111,7 +107,11 @@ const PaymentHistory = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, rowsPerPage, statusFilter]);
+
+  useEffect(() => {
+    fetchPayments();
+  }, [fetchPayments]);
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
