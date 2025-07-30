@@ -22,7 +22,7 @@ import AdminPayments from './pages/Admin/Payments';
 import ProtectedRoute from './components/Auth/ProtectedRoute';
 import AdminRoute from './components/Auth/AdminRoute';
 import { EnrollCourse, EnrollmentHistory, CourseProgress } from './pages/Enrollments';
-import { Checkout, PaymentSuccess, PaymentFailure, PaymentPending, PaymentReceipt } from './pages/Payment';
+import { Checkout, PaymentSuccess, PaymentFailure, PaymentPending, PaymentReceipt, PaymentHistory } from './pages/Payment';
 import { SSLCommerzSuccess, SSLCommerzFail, SSLCommerzCancel } from './pages/Payment/SSLCommerz';
 
 function App() {
@@ -94,6 +94,11 @@ function App() {
         } />
         
         {/* Payment Routes */}
+        <Route path="payment/history" element={
+          <ProtectedRoute>
+            <PaymentHistory />
+          </ProtectedRoute>
+        } />
         <Route path="checkout/:enrollmentId" element={
           <ProtectedRoute>
             <Checkout />

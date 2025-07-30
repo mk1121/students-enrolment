@@ -551,8 +551,51 @@ async function handleRefund(charge) {
   }
 }
 
+// @route   GET /api/payments/my-payments
+// @desc    Get user's payment history
+// @access  Private
+router.get('/my-payments', [authenticateToken], async (req, res) => {
+  try {
+    const { page = 1, limit = 10, status } = req.query;
+
+    const filter = { user: req.user._id };
+    if (status) {
+      filter.status = status;
+    }
+
+    const skip = (parseInt(page, 10) - 1) * parseInt(limit, 10);
+
+    const payments = await Payment.find(filter)
+      .populate('course', 'title category level thumbnail')
+      .populate('enrollment', 'status startDate')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit, 10));
+
+    const total = await Payment.countDocuments(filter);
+    const totalPages = Math.ceil(total / parseInt(limit, 10));
+
+    res.json({
+      payments,
+      pagination: {
+        currentPage: parseInt(page, 10),
+        totalPages,
+        total,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1,
+        limit: parseInt(limit, 10),
+      },
+    });
+  } catch (error) {
+    console.error('Get user payments error:', error);
+    res.status(500).json({
+      message: 'Server error while fetching payment history',
+    });
+  }
+});
+
 // @route   GET /api/payments
-// @desc    Get payment history
+// @desc    Get payment history (Admin only)
 // @access  Private
 router.get('/', [authenticateToken, requireAdmin], async (req, res) => {
   try {
