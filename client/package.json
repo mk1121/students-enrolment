@@ -25,7 +25,7 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "start:dev": "REACT_APP_ENVIRONMENT=development REACT_APP_API_URL=http://localhost:5001/api react-scripts start",
+    "start:dev": "REACT_APP_ENVIRONMENT=development react-scripts start",
     "start:staging": "REACT_APP_ENVIRONMENT=staging REACT_APP_API_URL=https://students-enrollment-develop.onrender.com/api react-scripts start",
     "start:production": "REACT_APP_ENVIRONMENT=production REACT_APP_API_URL=https://students-enrollment-production.onrender.com/api react-scripts start",
     "build": "react-scripts build",
