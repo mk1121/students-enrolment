@@ -101,7 +101,7 @@ app.use(
 
         // Environment-specific origins
         process.env.CLIENT_URL, // Production client URL from env
-        process.env.FRONTEND_URL, // Alternative env var name
+        process.env.FRONTEND_URL // Alternative env var name
 
         // Add any additional domains here
       ].filter(Boolean); // Remove any undefined/null values
